@@ -41,9 +41,14 @@ while [ $# -gt 0 ]; do
     --status) action=status ;;
     --machine) machine=1 ;;
     -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "Opção desconhecida: $arg" >&2; exit 2 ;;
+    *) echo "$(L 'Opção desconhecida' 'Unknown option'): $arg" >&2; exit 2 ;;
   esac
 done
+
+# Mensagens no idioma do sistema: L <português> <inglês>.
+lang="${LANGUAGE:-${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}}"
+case "${lang%%:*}" in pt*) pt=1 ;; *) pt=0 ;; esac
+L() { if [ "$pt" = 1 ]; then printf '%s' "$1"; else printf '%s' "$2"; fi; }
 
 version_of() { sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$1/package.json" 2>/dev/null | head -n1; }
 version="$(version_of "$src/app")"
@@ -102,7 +107,8 @@ if [ "$ui" = gui ]; then
   fi
   ui=terminal
   if ! [ -t 0 ]; then
-    msg="Não foi possível abrir o instalador gráfico: ele precisa de uma sessão gráfica e do python-gobject (GTK 4). Rode num terminal: sh MHUB-Linux-Installer.run --terminal"
+    msg="$(L 'Não foi possível abrir o instalador gráfico: ele precisa de uma sessão gráfica e do python-gobject (GTK 4). Rode num terminal: sh MHUB-Linux-Installer.run --terminal' \
+      "Couldn't open the graphical installer: it needs a graphical session and python-gobject (GTK 4). Run it in a terminal: sh MHUB-Linux-Installer.run --terminal")"
     command -v notify-send >/dev/null 2>&1 && notify-send "OpenMHub" "$msg" || true
     echo "$msg" >&2
     exit 1
@@ -117,43 +123,43 @@ ask() { # ask <pergunta> <padrão s|n>
 }
 
 if [ "$ui" = terminal ] && [ "$yes" = 0 ]; then
-  echo "OpenMHub $version: instalador"
+  echo "OpenMHub $version: $(L instalador installer)"
   if [ -f "$dest/app/package.json" ]; then
-    echo "Instalado: versão $(version_of "$dest/app") em $dest"
-    echo "  1) Atualizar/reinstalar   2) Desinstalar   3) Sair"
-    read -r -p "Escolha [1]: " choice || choice=3
+    echo "$(L 'Instalado: versão' 'Installed: version') $(version_of "$dest/app") $(L em in) $dest"
+    echo "  $(L '1) Atualizar/reinstalar   2) Desinstalar   3) Sair' '1) Update/reinstall   2) Uninstall   3) Quit')"
+    read -r -p "$(L 'Escolha' 'Choose') [1]: " choice || choice=3
     case "${choice:-1}" in
       1) ;;
-      2) action=uninstall; ask "Remover também a regra udev e as preferências? [s/N]" n && all=1 ;;
+      2) action=uninstall; ask "$(L 'Remover também a regra udev e as preferências? [s/N]' 'Also remove the udev rule and preferences? [y/N]')" n && all=1 ;;
       *) exit 0 ;;
     esac
   else
-    ask "Instalar em $dest? [S/n]" s || exit 0
+    ask "$(L "Instalar em $dest? [S/n]" "Install to $dest? [Y/n]")" s || exit 0
   fi
   if [ "$action" = install ] && [ -z "$autostart" ]; then
-    if ask "Iniciar com o sistema (escondido na bandeja)? [s/N]" n; then autostart=on; else autostart=off; fi
+    if ask "$(L 'Iniciar com o sistema (escondido na bandeja)? [s/N]' 'Launch at login (hidden in the tray)? [y/N]')" n; then autostart=on; else autostart=off; fi
   fi
 fi
 
 # ---------- Desinstalar ----------
 if [ "$action" = uninstall ]; then
-  step stop run "Fechando o OpenMHub"
-  if pkill -f "$(running_pattern)" 2>/dev/null; then step stop ok "App fechado"; else step stop skip "Não estava aberto"; fi
+  step stop run "$(L 'Fechando o OpenMHub' 'Closing OpenMHub')"
+  if pkill -f "$(running_pattern)" 2>/dev/null; then step stop ok "$(L 'App fechado' 'App closed')"; else step stop skip "$(L 'Não estava aberto' 'It wasn’t running')"; fi
 
   # A regra udev sai antes dos arquivos: a janela de senha (askpass) pode estar dentro de $dest.
   if [ "$all" = 1 ]; then
     rm -rf "$config/mhub-linux"
     if [ -f "$rule" ]; then
-      step udev run "Removendo a regra udev"
-      if as_root "rm -f '$rule' && udevadm control --reload" "remover a regra udev de /etc/udev/rules.d"; then
-        step udev ok "Regra udev removida"
+      step udev run "$(L 'Removendo a regra udev' 'Removing the udev rule')"
+      if as_root "rm -f '$rule' && udevadm control --reload" "$(L 'remover a regra udev de /etc/udev/rules.d' 'remove the udev rule from /etc/udev/rules.d')"; then
+        step udev ok "$(L 'Regra udev removida' 'udev rule removed')"
       else
-        step udev fail "Não foi possível remover $rule"
+        step udev fail "$(L 'Não foi possível remover' "Couldn't remove") $rule"
       fi
     fi
   fi
 
-  step files run "Removendo o app, o atalho e os ícones"
+  step files run "$(L 'Removendo o app, o atalho e os ícones' 'Removing the app, shortcut and icons')"
   rm -rf "$dest"
   rm -f "$launcher" "$data/applications/mhub-linux.desktop" \
         "$data/icons/hicolor/256x256/apps/mhub-linux.png" \
@@ -161,47 +167,49 @@ if [ "$action" = uninstall ]; then
         "$data/icons/hicolor/scalable/apps/mhub-linux.svg"
   command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q "$data/applications" || true
   command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q -t "$data/icons/hicolor" 2>/dev/null || true
-  step files ok "Arquivos removidos"
+  step files ok "$(L 'Arquivos removidos' 'Files removed')"
 
-  step autostart run "Removendo o início automático"
+  step autostart run "$(L 'Removendo o início automático' 'Removing launch at login')"
   rm -f "$config/autostart/mhub-linux.desktop"
   # Linha marcada que o app põe no config do Hyprland (ver applyAutostart em app/main.js).
   for f in "${MHUB_HYPR_CONF:-}" "$config/hypr/hyprland.conf" "$config/hypr/hyprland.lua"; do
     [ -n "$f" ] && [ -f "$f" ] && grep -q 'mhub-linux-autostart$' "$f" && sed -i --follow-symlinks '/mhub-linux-autostart$/d' "$f" || true
   done
-  step autostart ok "Início automático removido"
+  step autostart ok "$(L 'Início automático removido' 'Launch at login removed')"
 
   if [ "$all" = 1 ]; then
-    step done ok "OpenMHub removido, com preferências e regra udev"
+    step done ok "$(L 'OpenMHub removido, com preferências e regra udev' 'OpenMHub removed, including preferences and the udev rule')"
   else
-    step done ok "OpenMHub removido (regra udev e preferências mantidas)"
+    step done ok "$(L 'OpenMHub removido (regra udev e preferências mantidas)' 'OpenMHub removed (udev rule and preferences kept)')"
   fi
   exit 0
 fi
 
 # ---------- Instalar ----------
 if [ "$src" = "$dest" ]; then
-  echo "Esta é a cópia instalada. Para atualizar, rode o instalador baixado (MHUB-Linux-Installer.run)." >&2
+  echo "$(L 'Esta é a cópia instalada. Para atualizar, rode o instalador baixado (MHUB-Linux-Installer.run).' \
+    'This is the installed copy. To update, run the downloaded installer (MHUB-Linux-Installer.run).')" >&2
   exit 1
 fi
 
-step electron run "Verificando o Electron"
+step electron run "$(L 'Verificando o Electron' 'Checking Electron')"
 if command -v electron42 >/dev/null 2>&1; then
-  step electron skip "electron42 já instalado"
+  step electron skip "$(L 'electron42 já instalado' 'electron42 already installed')"
 elif command -v pacman >/dev/null 2>&1; then
-  step electron run "Instalando electron42 com o pacman"
+  step electron run "$(L 'Instalando electron42 com o pacman' 'Installing electron42 with pacman')"
   if as_root "pacman -S --needed --noconfirm electron42" "instalar o pacote electron42 com o pacman"; then
-    step electron ok "electron42 instalado"
+    step electron ok "$(L 'electron42 instalado' 'electron42 installed')"
   else
-    step electron fail "Não foi possível instalar o electron42. Rode: sudo pacman -Syu electron42"
+    step electron fail "$(L 'Não foi possível instalar o electron42. Rode' "Couldn't install electron42. Run"): sudo pacman -Syu electron42"
     exit 1
   fi
 else
-  step electron fail "Falta o Electron 42. Esta distribuição não tem o pacote electron42 do Arch: baixe o Electron 42 em github.com/electron/electron/releases, extraia e crie um link ~/.local/bin/electron42 para o executável electron; depois rode o instalador de novo."
+  step electron fail "$(L 'Falta o Electron 42. Esta distribuição não tem o pacote electron42 do Arch: baixe o Electron 42 em github.com/electron/electron/releases, extraia e crie um link ~/.local/bin/electron42 para o executável electron; depois rode o instalador de novo.' \
+    'Electron 42 is missing. This distribution has no electron42 package (Arch): download Electron 42 from github.com/electron/electron/releases, extract it and link ~/.local/bin/electron42 to the electron executable, then run the installer again.')"
   exit 1
 fi
 
-step app run "Copiando o app para ${dest/#$HOME/\~}"
+step app run "$(L 'Copiando o app para' 'Copying the app to') ${dest/#$HOME/\~}"
 mkdir -p "$dest"
 rm -rf "$dest/app.new"
 cp -r "$src/app" "$dest/app.new"
@@ -220,9 +228,9 @@ export MHUB_LAUNCHER="$launcher"
 exec env -u ELECTRON_RUN_AS_NODE electron42 "$dest/app" "\$@"
 LAUNCHER
 chmod +x "$launcher"
-step app ok "App $version em ${dest/#$HOME/\~}"
+step app ok "App $version $(L em in) ${dest/#$HOME/\~}"
 
-step shortcut run "Criando o atalho no menu de aplicativos"
+step shortcut run "$(L 'Criando o atalho no menu de aplicativos' 'Adding the applications menu shortcut')"
 icons="$data/icons/hicolor"
 install -Dm644 "$src/app/assets/icon-256.png" "$icons/256x256/apps/mhub-linux.png"
 install -Dm644 "$src/app/assets/icon-512.png" "$icons/512x512/apps/mhub-linux.png"
@@ -236,31 +244,31 @@ auto="$config/autostart/mhub-linux.desktop"
 if [ -n "$autostart" ]; then
   # O próprio app grava a preferência, o ~/.config/autostart e a linha do Hyprland.
   if env -u ELECTRON_RUN_AS_NODE "$launcher" --set-autostart="$autostart" >/dev/null 2>&1; then
-    [ "$autostart" = on ] && step shortcut ok "Atalho criado; inicia com o sistema" || step shortcut ok "Atalho criado"
+    [ "$autostart" = on ] && step shortcut ok "$(L 'Atalho criado; inicia com o sistema' 'Shortcut added; launches at login')" || step shortcut ok "$(L 'Atalho criado' 'Shortcut added')"
   else
-    step shortcut fail "Atalho criado, mas não foi possível configurar o início automático"
+    step shortcut fail "$(L 'Atalho criado, mas não foi possível configurar o início automático' "Shortcut added, but launch at login couldn't be set up")"
   fi
 else
   # Atualiza o atalho de início automático, se já estiver ligado.
   [ -f "$auto" ] && sed -i "s|^Exec=.*|Exec=\"$launcher\" --hidden|" "$auto"
-  step shortcut ok "Atalho \"OpenMHub\" no menu de aplicativos"
+  step shortcut ok "$(L 'Atalho "OpenMHub" no menu de aplicativos' '"OpenMHub" shortcut in the applications menu')"
 fi
 
-step udev run "Verificando a regra udev"
+step udev run "$(L 'Verificando a regra udev' 'Checking the udev rule')"
 if [ -f "$rule" ] && cmp -s "$rule" "$src/udev/70-mhub-linux.rules"; then
-  step udev skip "Regra udev já instalada"
+  step udev skip "$(L 'Regra udev já instalada' 'udev rule already installed')"
 else
-  step udev run "Instalando a regra udev (pede a senha de administrador)"
+  step udev run "$(L 'Instalando a regra udev (pede a senha de administrador)' 'Installing the udev rule (asks for the administrator password)')"
   cmd="install -Dm644 '$src/udev/70-mhub-linux.rules' '$rule' && udevadm control --reload && udevadm trigger --subsystem-match=hidraw"
-  if as_root "$cmd" "copiar a regra udev para /etc/udev/rules.d, que libera o acesso aos dispositivos MCHOSE"; then
-    step udev ok "Regra udev instalada"
+  if as_root "$cmd" "$(L 'copiar a regra udev para /etc/udev/rules.d, que libera o acesso aos dispositivos MCHOSE' 'copy the udev rule to /etc/udev/rules.d, which grants access to MCHOSE devices')"; then
+    step udev ok "$(L 'Regra udev instalada' 'udev rule installed')"
   else
-    step udev fail "Regra udev não instalada; o app não vai achar os dispositivos. Rode depois: sudo install -Dm644 '$dest/udev/70-mhub-linux.rules' $rule && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw"
+    step udev fail "$(L 'Regra udev não instalada; o app não vai achar os dispositivos. Rode depois' "udev rule not installed; the app won't find your devices. Run later"): sudo install -Dm644 '$dest/udev/70-mhub-linux.rules' $rule && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw"
   fi
 fi
 
 case ":$PATH:" in
   *":$bin:"*) ;;
-  *) [ "$machine" = 1 ] || echo "Aviso: $bin não está no PATH; o atalho do menu funciona mesmo assim." ;;
+  *) [ "$machine" = 1 ] || echo "$(L "Aviso: $bin não está no PATH; o atalho do menu funciona mesmo assim." "Note: $bin is not in PATH; the menu shortcut works anyway.")" ;;
 esac
-step done ok "Pronto. Abra \"OpenMHub\" no menu de aplicativos ou rode: mhub-linux"
+step done ok "$(L 'Pronto. Abra "OpenMHub" no menu de aplicativos ou rode: mhub-linux' 'Done. Open "OpenMHub" from the applications menu or run: mhub-linux')"

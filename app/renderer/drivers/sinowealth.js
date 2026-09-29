@@ -14,6 +14,7 @@
 // testado em hardware.
 import { HidDriver, hex, sleep } from './base.js';
 import { KEY_ORDER, LAYOUT } from '../data/keyboard-ut98.js';
+import { t } from '../i18n.js';
 
 const RID = 0x13;          // sem fio
 const WIRED_RID = 9;       // com fio (feature report)
@@ -103,7 +104,7 @@ export function encodeKbMacros(macros) {
     body.push(name.length, ...name, ...acts);
   }
   const buf = [...head, ...body];
-  if (buf.length > KB_MACRO_AREA) throw new Error('Macros grandes demais para a memória do teclado');
+  if (buf.length > KB_MACRO_AREA) throw new Error(t('err.macrosTooBig', { dev: t('noun.keyboard') }));
   return Uint8Array.from(buf);
 }
 
@@ -179,7 +180,7 @@ export function wiredReadRequest(block, layer = 0) {
 export function wiredWriteRequest(block, bytes, layer = 0) {
   const b = BLOCK[block];
   const len = block === 'macro' ? bytes.length : b.wlen;
-  if (bytes.length > WIRED_LEN - 7) throw new Error('bloco grande demais para o modo com fio');
+  if (bytes.length > WIRED_LEN - 7) throw new Error(t('err.wiredBlock'));
   const p = new Uint8Array(WIRED_LEN);
   p.set([b.wset, b.layered ? layer : 0, 0, 1, 0, len & 0xff, len >> 8]);
   p.set(Array.from(bytes), 7);
@@ -207,7 +208,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
     super(devices);
     this.kind = 'keyboard';
     this.wired = this.productId === PID_WIRED;
-    this.name = 'Teclado MCHOSE';
+    this.name = t('kb.defaultName');
     // O mesmo teclado pelo cabo e pelo dongle vira um cartão só (o app prefere o cabo).
     this.identity = 'mchose-kb-41e4-2004';
     this.last = {};          // último estado conhecido (pedido ou push)
@@ -293,7 +294,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   // Gravação em blocos de 14 bytes; cada pacote espera o eco do teclado.
   // Três falhas seguidas num pacote: recomeça do primeiro (como o M HUB). Duas voltas no máximo.
   writeRaw(cmd, bytes, yyFn) {
-    if (!this.dev) return Promise.reject(new Error('Teclado não conectado'));
+    if (!this.dev) return Promise.reject(new Error(t('err.kbNotConnected')));
     const data = Array.from(bytes);
     const chunks = [];
     for (let i = 0; i < data.length; i += 14) chunks.push(data.slice(i, i + 14));
@@ -315,11 +316,11 @@ export class SinowealthKeyboardDriver extends HidDriver {
             if (!ok) await sleep(100 * (t + 1));
           }
           // Nem o primeiro pacote foi aceito: teclado dormindo, não vale recomeçar.
-          if (!ok && i === 0) return Promise.reject(new Error('o teclado não respondeu (está dormindo?)'));
+          if (!ok && i === 0) return Promise.reject(new Error(t('err.kbNoReply')));
         }
         if (ok) return true;
       }
-      throw new Error('o teclado não confirmou a gravação (está dormindo?)');
+      throw new Error(t('err.kbNoConfirm'));
     });
   }
 
@@ -355,7 +356,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   }
 
   writeWired(block, bytes, layer = 0) {
-    if (!this.dev) return Promise.reject(new Error('Teclado não conectado'));
+    if (!this.dev) return Promise.reject(new Error(t('err.kbNotConnected')));
     const req = wiredWriteRequest(block, bytes, layer);
     return this.exclusive(async () => {
       await sleep(50);                       // o M HUB espera 50 ms antes de cada gravação com fio
@@ -377,7 +378,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
     // Sem fio, yy = (camada << 4) | tamanho: um último bloco só de zeros daria yy = 0 e o
     // teclado gravaria na camada normal (visto no teste). A cauda 5A A5 evita isso; confere.
     if (block === 'keys' && !(bytes[bytes.length - 2] === 90 && bytes[bytes.length - 1] === 165)) {
-      return Promise.reject(new Error('bloco de teclas sem a marca final'));
+      return Promise.reject(new Error(t('err.kbKeyBlock')));
     }
     if (this.wired) return this.writeWired(block, bytes, layer);
     const b = BLOCK[block];
@@ -392,7 +393,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
       const back = await this.readBlock(block, layer, { first: 800 });
       if (back && same(Array.from(back.slice(0, len)), Array.from(bytes.slice(0, len)))) return back;
     }
-    throw new Error('o teclado não guardou os valores enviados');
+    throw new Error(t('err.kbNotStored'));
   }
 
   /* ---------- Identificação ---------- */
@@ -437,7 +438,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   //          mode: { id, brightness (bruto 0..20), speed 0..5, multi } }
   async writePerformance(patch) {
     if (!this.perfRaw) await this.readPerformance();
-    if (!this.perfRaw) throw new Error('não foi possível ler o teclado');
+    if (!this.perfRaw) throw new Error(t('err.kbRead'));
     const b = [...this.perfRaw];
     if ('fastMode' in patch) b[P.latency] = patch.fastMode ? 0 : (b[P.latency] || 2);
     if ('mac' in patch) { b[P.mac] = patch.mac ? 1 : 0; if (patch.mac) b[P.winLock] = 0; }
@@ -486,7 +487,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   // Cor de um efeito (lightMode) em [r, g, b].
   async writeLightColor(mode, rgb) {
     if (!this.lightRaw) await this.readLighting();
-    if (!this.lightRaw) throw new Error('não foi possível ler o teclado');
+    if (!this.lightRaw) throw new Error(t('err.kbRead'));
     const b = [...this.lightRaw];
     b.splice(mode * 21, 3, ...rgb.map((v) => Math.max(0, Math.min(255, Math.round(v)))));
     const back = await this.writeChecked('light', [...b, ...(this.wired ? LIGHT_TAIL_WIRED : LIGHT_TAIL)], LIGHT_LEN);
@@ -534,7 +535,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   // Grava a camada inteira; só as teclas de `changes` ({ nome: [4 bytes] }) mudam.
   async writeKeys(changes, layer = 0) {
     if (!this.keysRaw?.[layer]) await this.readKeys(layer);
-    if (!this.keysRaw?.[layer]) throw new Error('não foi possível ler o teclado');
+    if (!this.keysRaw?.[layer]) throw new Error(t('err.kbRead'));
     const b = [...this.keysRaw[layer]];
     for (const [k, v] of Object.entries(changes)) {
       const i = KEY_ORDER.indexOf(k);
@@ -568,7 +569,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   // colors: { nomeDaTecla: [r, g, b] } só com o que muda.
   async writeDiy(colors) {
     if (!this.diyRaw) await this.readDiy();
-    if (!this.diyRaw) throw new Error('não foi possível ler o teclado');
+    if (!this.diyRaw) throw new Error(t('err.kbRead'));
     const b = [...this.diyRaw];
     for (const [k, rgb] of Object.entries(colors)) {
       const i = KEY_ORDER.indexOf(k);
@@ -593,7 +594,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   // Macros gravadas no teclado: [{ name, actions }] (o modo fica na tecla, não na macro).
   async readMacros() {
     const r = await this.readBlock('macro', 0, { first: 800 });
-    if (!r) throw new Error('o teclado não respondeu à leitura das macros');
+    if (!r) throw new Error(t('err.kbMacroRead'));
     const area = r.slice(0, KB_MACRO_AREA);
     this.raw.kb.macroHead = hex(area.slice(0, 32));
     this.macros = decodeKbMacros(area);
@@ -625,7 +626,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
 
   // Configuração inteira em JSON simples (bytes crus de cada bloco + macros decodificadas).
   async exportConfig() {
-    if (!(await this.loadAll())) throw new Error('o teclado não respondeu (está dormindo?)');
+    if (!(await this.loadAll())) throw new Error(t('err.kbNoReply'));
     const macros = await this.readMacros();
     return {
       format: 'mhub-linux-keyboard', version: 1, model: this.model, password: this.raw.kb.password,
@@ -637,11 +638,11 @@ export class SinowealthKeyboardDriver extends HidDriver {
 
   // Grava de volta o que exportConfig devolveu; cada bloco é conferido lendo de volta.
   async importConfig(cfg) {
-    if (cfg?.format !== 'mhub-linux-keyboard') throw new Error('arquivo não é uma cópia de teclado do M HUB Linux');
+    if (cfg?.format !== 'mhub-linux-keyboard') throw new Error(t('err.kbBackupFormat'));
     if (!this.model) await this.readModel();
-    if (cfg.model !== this.model) throw new Error(`a cópia é de um ${cfg.model}, o teclado conectado é ${this.model}`);
+    if (cfg.model !== this.model) throw new Error(t('err.kbBackupModel', { from: cfg.model, to: this.model }));
     const bytes = (a, n) => {
-      if (!Array.isArray(a) || a.length < n || a.some((v) => !Number.isInteger(v) || v < 0 || v > 255)) throw new Error('cópia incompleta ou corrompida');
+      if (!Array.isArray(a) || a.length < n || a.some((v) => !Number.isInteger(v) || v < 0 || v > 255)) throw new Error(t('err.kbBackupBad'));
       return a.slice(0, n);
     };
     const perf = bytes(cfg.performance, PERF_LEN), light = bytes(cfg.lighting, LIGHT_LEN), diy = bytes(cfg.diy, DIY_LEN * 3);
@@ -658,7 +659,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
 
   async factoryReset() {
     // Com fio, o M HUB regrava as tabelas padrão dele em vez de um comando de reset.
-    if (this.wired) throw new Error('pelo cabo a restauração não é suportada; use o receptor 2.4G');
+    if (this.wired) throw new Error(t('err.kbFactoryWired'));
     await this.writeRaw(0x06, new Array(14).fill(0), yyTrim(14));
     await sleep(800);
     await this.loadAll();
@@ -685,7 +686,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
 
   // Relê tudo (botão de atualizar da interface).
   async reload() {
-    if (!(await this.loadAll())) throw new Error('o teclado não respondeu (está dormindo?)');
+    if (!(await this.loadAll())) throw new Error(t('err.kbNoReply'));
     return this.kb;
   }
 
@@ -694,7 +695,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   }
 
   async pollWired() {
-    const st = { name: this.name, mode: 'wired', via: 'Cabo USB' };
+    const st = { name: this.name, mode: 'wired', via: t('via.cable') };
     if (!this.dev) return { ...st, online: false };
     const r = await this.readBlock('battery');
     if (r) {
@@ -716,7 +717,7 @@ export class SinowealthKeyboardDriver extends HidDriver {
   }
 
   async pollWireless() {
-    const st = { name: this.name, mode: '2.4g', via: 'Receptor 2.4G' };
+    const st = { name: this.name, mode: '2.4g', via: t('via.receiver') };
     if (!this.dev) return { ...st, online: false };
     // Resposta: [0]=0x4A, [1]=total de pacotes, [2]=sequência, [3]=tamanho, [4]=bateria, [5]=nibbles.
     const r = await this.request(RID, packet(BLOCK.battery.get, 1, 0, 0), (rid, d) => rid === RID && d[0] === BLOCK.battery.get, { timeout: 700, tries: 1 });

@@ -16,6 +16,7 @@
 //   canBind, tip        se dá para ligar agora e a dica acima da lista
 //   bind(index, macro)  liga a macro ao botão/tecla escolhido
 import { MACRO_TYPE, MACRO_MAX, MACRO_AREA, DEFAULT_KEYS, encodeMacros } from '../drivers/g3v2.js';
+import { t } from '../i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -40,10 +41,10 @@ export const MACRO_ICONS = IC;
 
 /* ---------- Modos de repetição do mouse (code3 da entrada do botão) ---------- */
 export const MODES = [
-  { id: 2, icon: 'hold', name: 'Repetir enquanto segura', tip: 'A macro se repete enquanto o botão está pressionado e para ao soltar.' },
-  { id: 4, icon: 'toggle', name: 'Repetir até apertar de novo', tip: 'A macro se repete até o mesmo botão ser pressionado outra vez.', newFw: true },
-  { id: 3, icon: 'anyKey', name: 'Repetir até outra tecla', tip: 'A macro se repete até qualquer tecla ser pressionada.' },
-  { id: 0, icon: 'once', name: 'Executar uma vez', tip: 'Cada toque no botão executa a macro uma vez.' },
+  { id: 2, icon: 'hold', name: t('mx.hold'), tip: t('mx.holdTipBtn') },
+  { id: 4, icon: 'toggle', name: t('mx.toggle'), tip: t('mx.toggleTip'), newFw: true },
+  { id: 3, icon: 'anyKey', name: t('mx.anyKey'), tip: t('mx.anyKeyTipBtn') },
+  { id: 0, icon: 'once', name: t('mx.once'), tip: t('mx.onceTipBtn') },
 ];
 const modeOf = (ad, id) => ad.modes.find((m) => m.id === id) || ad.modes[ad.modes.length - 1];
 // O modo 4 só existe em firmware acima de 2.0.0 (regra do M HUB).
@@ -72,14 +73,14 @@ const WEB_HID = {
   ControlRight: 228, ShiftRight: 229, AltRight: 230, MetaRight: 231, OSRight: 231,
 };
 const SPECIAL = {
-  Enter: 'Enter', Escape: 'Esc', Backspace: 'Backspace', Tab: 'Tab', Space: 'Espaço', CapsLock: 'Caps Lock',
+  Enter: 'Enter', Escape: 'Esc', Backspace: 'Backspace', Tab: 'Tab', Space: t('key.space'), CapsLock: 'Caps Lock',
   Minus: '-', Equal: '=', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Semicolon: ';', Quote: "'",
   Backquote: '`', Comma: ',', Period: '.', Slash: '/', IntlBackslash: '\\ (ABNT)', IntlRo: '/ (ABNT)',
   PrintScreen: 'Print Screen', ScrollLock: 'Scroll Lock', PageUp: 'Page Up', PageDown: 'Page Down',
   ArrowRight: '→', ArrowLeft: '←', ArrowDown: '↓', ArrowUp: '↑', NumLock: 'Num Lock', ContextMenu: 'Menu',
-  AudioVolumeMute: 'Mudo', AudioVolumeUp: 'Volume +', AudioVolumeDown: 'Volume -',
-  ControlLeft: 'Ctrl esq.', ShiftLeft: 'Shift esq.', AltLeft: 'Alt esq.', MetaLeft: 'Super esq.',
-  ControlRight: 'Ctrl dir.', ShiftRight: 'Shift dir.', AltRight: 'AltGr', MetaRight: 'Super dir.',
+  AudioVolumeMute: t('fn.mute'), AudioVolumeUp: 'Volume +', AudioVolumeDown: 'Volume -',
+  ControlLeft: t('key.left', { key: 'Ctrl' }), ShiftLeft: t('key.left', { key: 'Shift' }), AltLeft: t('key.left', { key: 'Alt' }), MetaLeft: t('key.left', { key: 'Super' }),
+  ControlRight: t('key.right', { key: 'Ctrl' }), ShiftRight: t('key.right', { key: 'Shift' }), AltRight: 'AltGr', MetaRight: t('key.right', { key: 'Super' }),
 };
 const HID_LABEL = {};
 for (const [code, hid] of Object.entries(WEB_HID)) {
@@ -88,13 +89,13 @@ for (const [code, hid] of Object.entries(WEB_HID)) {
     .replace('Num Divide', 'Num /').replace('Num Multiply', 'Num *').replace('Num Subtract', 'Num -')
     .replace('Num Add', 'Num +').replace('Num Decimal', 'Num ,').replace('Num Equal', 'Num =').replace('Num Comma', 'Num ,');
 }
-const MOUSE_LABEL = { 1: 'Botão esquerdo', 2: 'Botão direito', 4: 'Botão do meio', 8: 'Voltar', 16: 'Avançar' };
+const MOUSE_LABEL = { 1: t('mb.left'), 2: t('mb.right'), 4: t('mb.middle'), 8: t('mb.back'), 16: t('mb.forward') };
 const BUTTON_MASK = [1, 4, 2, 8, 16];   // e.button -> bit do mouse
 
 function itemLabel(it) {
-  if (it.t === 'key') return HID_LABEL[it.code] || `Tecla ${it.code}`;
+  if (it.t === 'key') return HID_LABEL[it.code] || t('key.n', { code: it.code });
   if (it.t === 'mouse') return MOUSE_LABEL[it.btn] || `Mouse ${it.btn}`;
-  if (it.t === 'wheel') return it.up ? 'Roda ↑' : 'Roda ↓';
+  if (it.t === 'wheel') return t(it.up ? 'mx.wheelUp' : 'mx.wheelDown');
   return `${it.ms} ms`;
 }
 
@@ -179,21 +180,21 @@ export function macroPanelHtml(ad, q = '') {
   const shown = list.map((m, i) => ({ m, i })).filter(({ m }) => !q || m.name.toLowerCase().includes(q));
   return `<div class="mx-list">
     <p class="mx-tip">${esc(ad.tip)}</p>
-    <button class="btn-outline mx-new" data-act="macro-new" ${list.length >= ad.max ? 'disabled' : ''}>${IC.plus}Nova macro</button>
-    <div class="mx-count">Minhas macros <span>(${list.length}/${ad.max})</span>${synced.has(ad.drv) ? '' : `<em>lendo do ${ad.noun}…</em>`}</div>
-    ${syncState.get(ad.drv)?.mismatch ? `<div class="mx-warn">As macros gravadas no ${ad.noun} não batem com as deste computador.
-      <button class="btn-white sm" data-act="macro-push">Gravar estas no ${ad.noun}</button></div>` : ''}
+    <button class="btn-outline mx-new" data-act="macro-new" ${list.length >= ad.max ? 'disabled' : ''}>${IC.plus}${t('mx.new')}</button>
+    <div class="mx-count">${t('mx.mine')} <span>(${list.length}/${ad.max})</span>${synced.has(ad.drv) ? '' : `<em>${t('mx.reading', { dev: ad.noun })}</em>`}</div>
+    ${syncState.get(ad.drv)?.mismatch ? `<div class="mx-warn">${t('mx.mismatch', { dev: ad.noun })}
+      <button class="btn-white sm" data-act="macro-push">${t('mx.push', { dev: ad.noun })}</button></div>` : ''}
     <div class="mx-items">
     ${shown.map(({ m, i }) => {
       const on = ad.boundIndex === i;
       return `<div class="mx-item ${on ? 'on' : ''} ${ad.canBind ? '' : 'off'}" data-act="macro-bind" data-i="${i}" title="${esc(modeOf(ad, m.type).name)}">
         <span class="mx-ic">${IC[modeOf(ad, m.type).icon]}</span>
         <span class="mx-name">${esc(m.name)}</span>
-        <span class="mx-n">${m.unknown ? 'sem conteúdo' : `${actionCount(m)} ações`}</span>
-        <button class="mx-btn" data-act="macro-edit" data-i="${i}" title="Editar">${IC.edit}</button>
-        <button class="mx-btn danger" data-act="macro-del" data-i="${i}" title="Apagar">${IC.trash}</button>
+        <span class="mx-n">${m.unknown ? t('mx.noContent') : t('mx.actions', { n: actionCount(m) })}</span>
+        <button class="mx-btn" data-act="macro-edit" data-i="${i}" title="${t('common.edit')}">${IC.edit}</button>
+        <button class="mx-btn danger" data-act="macro-del" data-i="${i}" title="${t('common.delete')}">${IC.trash}</button>
       </div>`;
-    }).join('') || `<div class="kempty">${list.length ? 'Nada encontrado.' : `Nenhuma macro ainda. ${esc(ad.emptyTip || 'Crie uma e clique nela para ligar a um botão.')}`}</div>`}
+    }).join('') || `<div class="kempty">${list.length ? t('common.noResults') : t('mx.none', { tip: esc(ad.emptyTip || t('mx.emptyTip')) })}</div>`}
     </div>
   </div>`;
 }
@@ -207,19 +208,19 @@ export function bindMacroPanel(root, ad) {
   on('[data-act="macro-push"]', () => run(ctx, async () => {
     await ad.save(getMacros(drv));
     syncState.set(drv, { mismatch: false });
-  }, `Macros gravadas no ${ad.noun}`));
+  }, t('mx.pushed', { dev: ad.noun })));
   on('[data-act="macro-edit"]', (el, e) => { e.stopPropagation(); openMacroEditor(ad, +el.dataset.i); });
   on('[data-act="macro-del"]', async (el, e) => {
     e.stopPropagation();
     const i = +el.dataset.i;
     const list = getMacros(drv);
-    const ok = await ctx.confirm(`Apagar a macro "${list[i]?.name}"?`, ad.deleteTip || 'Os botões ligados a ela voltam à função padrão.');
+    const ok = await ctx.confirm(t('mx.deleteQ', { name: list[i]?.name }), ad.deleteTip || t('mx.deleteTip'));
     if (!ok) return;
     const rest = list.filter((_, j) => j !== i);
     await run(ctx, async () => {
       await ad.remove(i, rest);
       setMacros(drv, rest);
-    }, 'Macro apagada');
+    }, t('mx.deleted'));
   });
   on('[data-act="macro-bind"]', (el) => {
     if (!ad.canBind) return;
@@ -245,7 +246,7 @@ async function readMouse(drv) {
     const l = local[i];
     if (l) { if (d.actions != null && d.actions !== actionCount(l)) differs = true; return l; }
     const bound = keys.find((k) => k.type === MACRO_TYPE && k.code1 === i);
-    return { name: `Macro ${i + 1} (do mouse)`, type: bound ? bound.code3 : 0, items: [], unknown: true };
+    return { name: t('mx.fromMouse', { n: i + 1 }), type: bound ? bound.code3 : 0, items: [], unknown: true };
   });
   // Macros locais que o mouse não tem continuam na lista, para poder regravar.
   for (let i = dev.macros.length; i < local.length; i++) list.push(local[i]);
@@ -256,7 +257,7 @@ export function mouseMacroAdapter(ctx, keys, sel) {
   const { drv } = ctx;
   const cur = keys[sel];
   return {
-    drv, ctx, noun: 'mouse',
+    drv, ctx, noun: t('noun.mouse'),
     max: MACRO_MAX, nameMax: 20, delayMax: 16000, wheel: true, defaultMode: 0,
     modes: modesFor(drv),
     capacity: (list, index) => {
@@ -279,7 +280,7 @@ export function mouseMacroAdapter(ctx, keys, sel) {
     },
     boundIndex: cur && cur.type === MACRO_TYPE ? cur.code1 : -1,
     canBind: sel !== 0,
-    tip: sel === 0 ? 'O botão esquerdo não recebe macro. Escolha outro botão no mouse ao lado.' : 'Clique numa macro para ligar ao botão selecionado.',
+    tip: t(sel === 0 ? 'mx.noLeft' : 'mx.bindTip'),
     bind(i, m) {
       const next = (ctx.st.keys || DEFAULT_KEYS).map((k) => ({ ...k }));
       next[sel] = { type: MACRO_TYPE, code1: i, code2: 0, code3: m.type };
@@ -329,23 +330,23 @@ export function openMacroEditor(ad, index) {
 
   function top(right) {
     return `<div class="mx-top">
-      <div class="mx-title">${ed.step === 'name' ? '' : `<input class="mx-name-in" data-e="name" maxlength="${NAME_MAX}" size="${Math.max(6, ed.name.length + 1)}" value="${esc(ed.name)}" placeholder="Nome da macro"><small>${ed.name.length}/${NAME_MAX}</small>`}</div>
+      <div class="mx-title">${ed.step === 'name' ? '' : `<input class="mx-name-in" data-e="name" maxlength="${NAME_MAX}" size="${Math.max(6, ed.name.length + 1)}" value="${esc(ed.name)}" placeholder="${t('mx.name')}"><small>${ed.name.length}/${NAME_MAX}</small>`}</div>
       <span class="spacer"></span>${right}
-      <button class="btn-white" data-e="exit">Sair</button>
+      <button class="btn-white" data-e="exit">${t('mx.exit')}</button>
     </div>`;
   }
 
   function stepName() {
     return `${top('')}<div class="mx-center">
-      <input class="mx-bigname" data-e="bigname" maxlength="${NAME_MAX}" placeholder="Nome da macro" value="${esc(ed.name)}">
+      <input class="mx-bigname" data-e="bigname" maxlength="${NAME_MAX}" placeholder="${t('mx.name')}" value="${esc(ed.name)}">
       <div class="mx-len">${ed.name.length}/${NAME_MAX}</div>
-      <div class="mx-help">${ed.error ? `<span class="err">${esc(ed.error)}</span>` : 'Digite o nome e aperte Enter para continuar.'}</div>
+      <div class="mx-help">${ed.error ? `<span class="err">${esc(ed.error)}</span>` : t('mx.nameHelp')}</div>
     </div>`;
   }
 
   function stepType() {
     return `${top('')}<div class="mx-center">
-      <h2>Escolha o tipo de macro</h2>
+      <h2>${t('mx.chooseType')}</h2>
       <div class="mx-types">${modes.map((m) => `
         <button class="mx-type" data-e="type" data-v="${m.id}">
           <span class="mx-tile ${ed.type === m.id ? 'on' : ''}">${IC[m.icon]}</span>
@@ -356,15 +357,15 @@ export function openMacroEditor(ad, index) {
 
   function tile(it, i) {
     const sel = i === ed.sel ? 'sel' : '';
-    const del = ed.recording ? '' : `<span class="mx-x" data-e="del" data-i="${i}" title="Apagar">${IC.close}</span>`;
-    const add = ed.recording ? '' : `<span class="mx-add" data-e="add-delay" data-i="${i}" title="Inserir atraso depois">${IC.plus}</span>`;
+    const del = ed.recording ? '' : `<span class="mx-x" data-e="del" data-i="${i}" title="${t('common.delete')}">${IC.close}</span>`;
+    const add = ed.recording ? '' : `<span class="mx-add" data-e="add-delay" data-i="${i}" title="${t('mx.insertDelay')}">${IC.plus}</span>`;
     if (it.t === 'delay') {
       const body = i === ed.editDelay
         ? `<input class="mx-delay-in" data-e="delay-in" data-i="${i}" type="number" min="1" max="${DELAY_MAX}" value="${it.ms}">ms`
         : `<b>${it.ms}</b>ms`;
       return `<div class="mx-act delay ${sel}" data-e="pick" data-i="${i}">${IC.clock}${body}${del}${add}</div>`;
     }
-    const dir = it.t === 'wheel' ? '' : `<span class="mx-dir ${it.down ? 'down' : 'up'}" data-e="flip" data-i="${i}" title="${it.down ? 'Pressionar (clique para trocar)' : 'Soltar (clique para trocar)'}">${it.down ? IC.down : IC.up}</span>`;
+    const dir = it.t === 'wheel' ? '' : `<span class="mx-dir ${it.down ? 'down' : 'up'}" data-e="flip" data-i="${i}" title="${t(it.down ? 'mx.press' : 'mx.release')}">${it.down ? IC.down : IC.up}</span>`;
     return `<div class="mx-act ${it.t} ${it.down === false ? 'is-up' : ''} ${sel}" data-e="pick" data-i="${i}">${dir}<span class="mx-lbl">${esc(itemLabel(it))}</span>${del}${add}</div>`;
   }
 
@@ -372,35 +373,35 @@ export function openMacroEditor(ad, index) {
     const n = itemsToActions(ed.items).length;
     const cap = maxActions();
     const dis = ed.recording ? 'disabled' : '';
-    const right = `<button class="btn-outline mx-save" data-e="save" ${ed.saving || ed.recording ? 'disabled' : ''}>${ed.saving ? 'Gravando…' : 'Salvar'}</button>
-      <button class="btn-white" data-e="clear" ${ed.recording || !ed.items.length ? 'disabled' : ''}>Limpar</button>`;
+    const right = `<button class="btn-outline mx-save" data-e="save" ${ed.saving || ed.recording ? 'disabled' : ''}>${t(ed.saving ? 'mx.saving' : 'mx.save')}</button>
+      <button class="btn-white" data-e="clear" ${ed.recording || !ed.items.length ? 'disabled' : ''}>${t('mx.clear')}</button>`;
     return `${top(right)}
     <div class="mx-bar">
-      <span class="mx-lab ${ed.recording ? 'dim' : ''}">Tipo</span>
+      <span class="mx-lab ${ed.recording ? 'dim' : ''}">${t('mx.type')}</span>
       ${modes.map((m) => `<button class="mx-mini ${ed.type === m.id ? 'on' : ''}" data-e="type" data-v="${m.id}" title="${m.name}: ${m.tip}" ${dis}>${IC[m.icon]}</button>`).join('')}
       <span class="mx-modename">${esc(modeOf(ad, ed.type).name)}</span>
       <span class="spacer"></span>
-      <label class="mx-std ${ed.recording ? 'dim' : ''}"><input type="checkbox" data-e="std-on" ${ed.useStd ? 'checked' : ''} ${dis}>Atraso padrão
+      <label class="mx-std ${ed.recording ? 'dim' : ''}"><input type="checkbox" data-e="std-on" ${ed.useStd ? 'checked' : ''} ${dis}>${t('mx.stdDelay')}
         <input class="mx-std-in" type="number" data-e="std" min="1" max="${DELAY_MAX}" value="${ed.std}" ${ed.useStd && !ed.recording ? '' : 'disabled'}>ms</label>
     </div>
     <div class="mx-area ${ed.recording ? 'rec' : ''}" data-e="area">
       <div class="mx-acts">${ed.items.map(tile).join('')}</div>
-      ${!ed.items.length && !ed.recording ? `<div class="mx-empty">Clique em Gravar e use o teclado e o mouse. Teclas${ad.wheel ? ', cliques e a roda entram' : ' e cliques entram'} na lista com os atrasos entre eles.</div>` : ''}
-      ${ed.recording ? `<div class="mx-empty rec">Gravando… teclas${ad.wheel ? ', cliques e a roda' : ' e cliques'} desta área entram na macro.</div>` : ''}
+      ${!ed.items.length && !ed.recording ? `<div class="mx-empty">${t(ad.wheel ? 'mx.emptyWheel' : 'mx.emptyNoWheel')}</div>` : ''}
+      ${ed.recording ? `<div class="mx-empty rec">${t(ad.wheel ? 'mx.recWheel' : 'mx.recNoWheel')}</div>` : ''}
     </div>
     <div class="mx-foot">
-      <button class="mx-rec ${ed.recording ? 'stop' : ''}" data-e="rec">${ed.recording ? `${IC.stop}Parar` : `${IC.rec}Gravar`}</button>
+      <button class="mx-rec ${ed.recording ? 'stop' : ''}" data-e="rec">${ed.recording ? `${IC.stop}${t('mx.stop')}` : `${IC.rec}${t('mx.record')}`}</button>
       <div class="mx-ins ${ed.recording ? 'dim' : ''}">
-        <span>Inserir${ed.sel >= 0 ? ' depois do item marcado' : ''}:</span>
-        <button class="btn-white sm" data-e="ins" data-v="delay" ${dis}>${IC.clock}Atraso</button>
-        <button class="btn-white sm" data-e="ins" data-v="m1" ${dis}>Clique esquerdo</button>
-        <button class="btn-white sm" data-e="ins" data-v="m2" ${dis}>Clique direito</button>
-        <button class="btn-white sm" data-e="ins" data-v="m4" ${dis}>Clique do meio</button>
-        ${ad.wheel ? `<button class="btn-white sm" data-e="ins" data-v="wu" ${dis}>Roda ↑</button>
-        <button class="btn-white sm" data-e="ins" data-v="wd" ${dis}>Roda ↓</button>` : ''}
+        <span>${t(ed.sel >= 0 ? 'mx.insertAfter' : 'mx.insert')}</span>
+        <button class="btn-white sm" data-e="ins" data-v="delay" ${dis}>${IC.clock}${t('mx.delay')}</button>
+        <button class="btn-white sm" data-e="ins" data-v="m1" ${dis}>${t('fn.leftButton')}</button>
+        <button class="btn-white sm" data-e="ins" data-v="m2" ${dis}>${t('fn.rightButton')}</button>
+        <button class="btn-white sm" data-e="ins" data-v="m4" ${dis}>${t('fn.middleButton')}</button>
+        ${ad.wheel ? `<button class="btn-white sm" data-e="ins" data-v="wu" ${dis}>${t('mx.wheelUp')}</button>
+        <button class="btn-white sm" data-e="ins" data-v="wd" ${dis}>${t('mx.wheelDown')}</button>` : ''}
       </div>
       <span class="spacer"></span>
-      <span class="mx-cnt ${n > cap ? 'err' : ''}">${n}/${cap} ações</span>
+      <span class="mx-cnt ${n > cap ? 'err' : ''}">${t('mx.actions', { n: `${n}/${cap}` })}</span>
     </div>
     ${ed.error ? `<div class="mx-error">${esc(ed.error)}</div>` : ''}`;
   }
@@ -437,7 +438,7 @@ export function openMacroEditor(ad, index) {
 
   /* Gravação: teclado na janela toda; mouse e roda só dentro da área da lista. */
   function push(it, ts) {
-    if (itemsToActions(ed.items).length >= maxActions()) { ed.error = `A memória de macros do ${noun} encheu.`; stopRec(); draw(); return; }
+    if (itemsToActions(ed.items).length >= maxActions()) { ed.error = t('mx.full', { dev: noun }); stopRec(); draw(); return; }
     if (ed.items.length && ed.items[ed.items.length - 1].t !== 'delay') {
       ed.items.push({ t: 'delay', ms: ed.useStd ? ed.std : clampDelay(ts - ed.last) });
     }
@@ -493,7 +494,7 @@ export function openMacroEditor(ad, index) {
   async function exit() {
     if (ed.recording) { stopRec(); draw(); return; }
     if (ed.dirty && ed.step === 'edit') {
-      const ok = await ctx.confirm('Sair sem salvar?', 'As mudanças desta macro serão perdidas.');
+      const ok = await ctx.confirm(t('mx.exitQ'), t('mx.exitQBody'));
       if (!ok) return;
     }
     close();
@@ -503,14 +504,14 @@ export function openMacroEditor(ad, index) {
 
   async function save() {
     const name = ed.name.trim();
-    if (!name) { ed.error = 'Dê um nome para a macro.'; draw(); return; }
-    if (nameTaken(name)) { ed.error = 'Já existe uma macro com esse nome.'; draw(); return; }
+    if (!name) { ed.error = t('mx.needName'); draw(); return; }
+    if (nameTaken(name)) { ed.error = t('mx.nameTaken'); draw(); return; }
     // Atraso sobrando no começo não tem ação antes para somar: tira.
     while (ed.items.length && ed.items[0].t === 'delay') ed.items.shift();
     const n = itemsToActions(ed.items).length;
     const cap = maxActions();
-    if (!n) { ed.error = 'Grave ou insira pelo menos uma ação.'; draw(); return; }
-    if (n > cap) { ed.error = `Macro grande demais: o limite livre é ${cap} ações.`; draw(); return; }
+    if (!n) { ed.error = t('mx.needAction'); draw(); return; }
+    if (n > cap) { ed.error = t('mx.tooBig', { cap }); draw(); return; }
     const macro = { name, type: ed.type < 0 ? ad.defaultMode : ed.type, items: ed.items.map((x) => ({ ...x })) };
     const list = getMacros(drv).map((m) => ({ ...m }));
     const idx = isNew ? list.length : index;
@@ -521,10 +522,10 @@ export function openMacroEditor(ad, index) {
       await ad.save(list);
       setMacros(drv, list);
       ok = true;
-    }, `Macro salva no ${noun}`);
+    }, t('mx.saved', { dev: noun }));
     ed.saving = false;
     if (ok) close();
-    else { ed.error = `Não foi possível gravar no ${noun}. Veja se ele está ligado.`; draw(); }
+    else { ed.error = t('mx.writeFail', { dev: noun }); draw(); }
   }
 
   /* Eventos do editor (delegados no overlay) */
@@ -576,7 +577,7 @@ export function openMacroEditor(ad, index) {
     if (t.dataset?.e === 'bigname' && e.key === 'Enter') {
       const n = t.value.trim();
       if (!n) return;
-      if (nameTaken(n)) { ed.error = 'Já existe uma macro com esse nome.'; draw(); return; }
+      if (nameTaken(n)) { ed.error = t('mx.nameTaken'); draw(); return; }
       ed.name = n; ed.error = ''; ed.step = 'type'; draw();
     } else if ((t.dataset?.e === 'delay-in' || t.dataset?.e === 'std' || t.dataset?.e === 'name') && e.key === 'Enter') {
       t.blur();

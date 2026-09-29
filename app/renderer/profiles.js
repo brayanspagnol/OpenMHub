@@ -2,6 +2,7 @@
 // O primeiro item da lista (fixo) é a configuração que já está no aparelho; os perfis são cópias.
 // Cada tipo de aparelho tem um adaptador: { kind, model, storageKey, snapshot(drv), apply(drv, data), same(a, b) }.
 import { getMacros, itemsToActions } from './views/macros.js';
+import { t } from './i18n.js';
 
 export const MAX_PROFILES = 6;
 export const NAME_MAX = 24;
@@ -34,8 +35,8 @@ export function uniqueName(list, base, skip = -1) {
 
 export function nextName(list) {
   let n = list.length + 1;
-  while (list.some((p) => p.name === `Perfil ${n}`)) n++;
-  return `Perfil ${n}`;
+  while (list.some((p) => p.name === t('pf.nameN', { n }))) n++;
+  return t('pf.nameN', { n });
 }
 
 // Separa os dados do perfil (sem nome e marca de ativo).
@@ -45,7 +46,7 @@ export function profileData(p) {
 }
 
 /* ---------- Exportar e importar ---------- */
-const safeFile = (s) => String(s).replace(/[\\/:*?"<>|\x00-\x1f]+/g, '_').trim() || 'perfil';
+const safeFile = (s) => String(s).replace(/[\\/:*?"<>|\x00-\x1f]+/g, '_').trim() || t('pf.file');
 
 // Arquivo igual ao do M HUB: { deviceModel, profileData }.
 export function exportProfile(model, profile) {
@@ -64,20 +65,20 @@ export function exportProfile(model, profile) {
 export function readJsonFile(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => { try { resolve(JSON.parse(r.result)); } catch { reject(new Error('o arquivo não é um JSON válido')); } };
-    r.onerror = () => reject(new Error('não foi possível ler o arquivo'));
+    r.onload = () => { try { resolve(JSON.parse(r.result)); } catch { reject(new Error(t('pf.badJson'))); } };
+    r.onerror = () => reject(new Error(t('pf.readFail')));
     r.readAsText(file, 'UTF-8');
   });
 }
 
-// Confere o arquivo e devolve o perfil novo (ainda não salvo). Erros em pt-BR.
+// Confere o arquivo e devolve o perfil novo (ainda não salvo). Erros no idioma da interface.
 export function parseImport(obj, adapter, list) {
-  if (!obj || typeof obj !== 'object' || !obj.deviceModel || !obj.profileData) throw new Error('Arquivo de perfil inválido.');
-  if (obj.deviceModel !== adapter.model) throw new Error(`Este perfil é de outro aparelho (${obj.deviceModel}).`);
-  if (list.length >= MAX_PROFILES) throw new Error(`Limite de ${MAX_PROFILES} perfis atingido. Exclua um antes de importar.`);
+  if (!obj || typeof obj !== 'object' || !obj.deviceModel || !obj.profileData) throw new Error(t('pf.badFile'));
+  if (obj.deviceModel !== adapter.model) throw new Error(t('pf.otherDevice', { model: obj.deviceModel }));
+  if (list.length >= MAX_PROFILES) throw new Error(t('pf.limitImport', { max: MAX_PROFILES }));
   const data = profileData(obj.profileData);
-  if (!adapter.valid(data)) throw new Error('O arquivo não traz uma configuração completa deste aparelho.');
-  const base = String(obj.profileData.name || 'Importado').slice(0, NAME_MAX);
+  if (!adapter.valid(data)) throw new Error(t('pf.incomplete'));
+  const base = String(obj.profileData.name || t('pf.importedName')).slice(0, NAME_MAX);
   return { name: uniqueName(list, base), active: false, ...clone(data) };
 }
 
@@ -111,14 +112,14 @@ const mouseAdapter = (drv) => ({
       try { localStorage.setItem(macroKey(drv), JSON.stringify(local)); } catch { /* sem armazenamento */ }
     }
     const cur = await drv.readConfig();
-    if (!cur) throw new Error('o mouse não respondeu');
+    if (!cur) throw new Error(t('pf.mouseNoReply'));
     if (!eqJson(pickConfig(cur), data.config)) await drv.writeConfig(clone(data.config));
     const keys = await drv.readKeys();
     if (!keys || !eqJson(pickKeys(keys), data.keys)) await drv.writeKeys(clone(data.keys));
     const backC = await drv.readConfig();
     const backK = await drv.readKeys();
-    if (!backC || !eqJson(pickConfig(backC), data.config)) throw new Error('o mouse não guardou a configuração');
-    if (!backK || !eqJson(pickKeys(backK), data.keys)) throw new Error('o mouse não guardou os botões');
+    if (!backC || !eqJson(pickConfig(backC), data.config)) throw new Error(t('pf.mouseNoConfig'));
+    if (!backK || !eqJson(pickKeys(backK), data.keys)) throw new Error(t('pf.mouseNoKeys'));
   },
 });
 
@@ -157,9 +158,9 @@ const keyboardAdapter = (drv) => ({
     : d.format === 'raw' && Array.isArray(d.perf) && Array.isArray(d.light) && Array.isArray(d.diy) && Array.isArray(d.keys?.[0]) && Array.isArray(d.keys?.[1])),
   same: (a, b) => eqJson(a, b),
   async apply(data) {
-    if (!drv.kb) throw new Error('o teclado ainda não foi lido (está dormindo?)');
+    if (!drv.kb) throw new Error(t('pf.kbNotRead'));
     if (data.format === 'driver') {
-      if (typeof drv.importConfig !== 'function') throw new Error('esta versão do driver não importa este formato');
+      if (typeof drv.importConfig !== 'function') throw new Error(t('pf.kbFormat'));
       await drv.importConfig(clone(data.config));
       return;
     }

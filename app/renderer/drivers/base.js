@@ -1,4 +1,5 @@
 // Base comum dos drivers: abre as interfaces HID e faz pedido/resposta com timeout.
+import { t } from '../i18n.js';
 
 export const hex = (u8) => Array.from(u8, (b) => b.toString(16).padStart(2, '0')).join(' ');
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -85,6 +86,6 @@ export class GenericDriver extends HidDriver {
     this.kind = /keyboard|teclado/i.test(this.productName) ? 'keyboard' : 'mouse';
   }
   async poll() {
-    return { name: this.productName, via: 'Mostramos só a conexão por enquanto' };
+    return { name: this.productName, via: t('via.generic') };
   }
 }

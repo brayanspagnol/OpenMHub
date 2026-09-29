@@ -4,6 +4,7 @@ import { mouseRender } from '../renders.js';
 import { RATES, SENSOR, DEFAULT_CONFIG, DEFAULT_KEYS, MACRO_TYPE } from '../drivers/g3v2.js';
 import { macroListHtml, bindMacroList, macroName } from './macros.js';
 import KEYS from '../data/mouse-keys.js';
+import { t } from '../i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -18,16 +19,16 @@ function mouseFig(ctx, h) {
 }
 
 // O M HUB esconde estas opções no G3 V2 (não Pro): o firmware aceita, mas o efeito não é garantido.
-const EXP = ' <span class="exp" title="O M HUB oficial não mostra esta opção para o G3 V2. Pode não ter efeito.">Experimental</span>';
+const EXP = ` <span class="exp" title="${t('mouse.exp')}">Experimental</span>`;
 
 // y = centro da etiqueta, em fração da altura da foto (a figura muda de tamanho com a janela).
 // tx/ty: ponto do botão na foto (fração da largura/altura), medido no M HUB oficial.
 const BUTTONS = [
-  { label: 'Botão esquerdo', side: 'left', y: 0.19, tx: 0.3, ty: 0.13 },
-  { label: 'Botão direito', side: 'right', y: 0.19, tx: 0.7, ty: 0.13 },
-  { label: 'Botão do meio', side: 'right', y: 0.33, tx: 0.52, ty: 0.19 },
-  { label: 'Voltar', side: 'left', y: 0.56, tx: 0.035, ty: 0.55 },
-  { label: 'Avançar', side: 'left', y: 0.40, tx: 0.02, ty: 0.4 },
+  { label: t('mb.left'), side: 'left', y: 0.19, tx: 0.3, ty: 0.13 },
+  { label: t('mb.right'), side: 'right', y: 0.19, tx: 0.7, ty: 0.13 },
+  { label: t('mb.middle'), side: 'right', y: 0.33, tx: 0.52, ty: 0.19 },
+  { label: t('mb.back'), side: 'left', y: 0.56, tx: 0.035, ty: 0.55 },
+  { label: t('mb.forward'), side: 'left', y: 0.40, tx: 0.02, ty: 0.4 },
 ];
 
 // Linhas das etiquetas como no M HUB: sai reta da etiqueta e desce inclinada até o botão.
@@ -59,45 +60,30 @@ function drawLeads(root) {
 }
 
 /* ---------- Nomes das funções ---------- */
-const PT = {
-  leftButton: 'Clique esquerdo', rightButton: 'Clique direito', middleButton: 'Clique do meio',
-  forward: 'Avançar', backward: 'Voltar', scrollUp: 'Rolar para cima', scrollDown: 'Rolar para baixo',
-  DPI: 'Ciclo de DPI', cut: 'Recortar', copy: 'Copiar', paste: 'Colar',
-  playPause: 'Tocar/pausar', mute: 'Mudo', stopPlaying: 'Parar', previousTrack: 'Faixa anterior',
-  nextTrack: 'Próxima faixa', volumeUp: 'Volume +', volumeDown: 'Volume -', multimedia: 'Player de mídia',
-  screenBrightnessUp: 'Brilho +', screenBrightnessDown: 'Brilho -', browserHomePage: 'Navegador: início',
-  browserRefresh: 'Navegador: recarregar', browserStop: 'Navegador: parar', browserForward: 'Navegador: avançar',
-  browserBackward: 'Navegador: voltar', browserFavorite: 'Navegador: favoritos', browserSearch: 'Navegador: busca',
-  calculator: 'Calculadora', myComputer: 'Arquivos', mailbox: 'E-mail', forbidden: 'Desativado',
-  'DPI +': 'DPI +', 'DPI -': 'DPI -', dpiSwitch: 'Alternar DPI',
-};
-const GROUPS = {
-  mouse: 'Mouse', edit: 'Edição', multimedia: 'Multimídia', system: 'Sistema', keyboard: 'Teclas',
-  navigation: 'Navegação', Windows: 'Tecla Super', efficiency: 'Produtividade', other: 'Outros', dpi: 'DPI',
-};
+// Nomes do M HUB (leftButton...) têm tradução em fn.*; teclas e atalhos ("Ctrl + C") ficam como vêm.
 const CATS = [
-  ['system', 'Sistema'],
-  ['keyboard', 'Teclado'],
-  ['other', 'Atalhos'],
+  ['system', t('mouse.cat.system')],
+  ['keyboard', t('mouse.cat.keyboard')],
+  ['other', t('mouse.cat.other')],
   ['macros', 'Macros'],
 ];
-const keyLabel = (k) => PT[k.name] || k.name.replace('LWindows', 'Super');
+const keyLabel = (k) => t('fn.' + k.name, null, k.name.replace('LWindows', 'Super'));
 
 const ALL_KEYS = Object.values(KEYS).flatMap((groups) => groups.flatMap((g) => g.keys));
 const sameKey = (a, b) => a && b && a.type === b.type && a.code1 === b.code1 && a.code2 === b.code2 && a.code3 === b.code3;
 export function keyName(k, drv = null) {
   if (!k) return '--';
   if (k.type === MACRO_TYPE) return drv ? `Macro: ${macroName(k, drv)}` : `Macro ${k.code1 + 1}`;
-  if (k.type === 32 && k.code1 === 0) return 'Desativado';
+  if (k.type === 32 && k.code1 === 0) return t('fn.forbidden');
   const f = ALL_KEYS.find((x) => sameKey(x, k));
-  return f ? keyLabel(f) : `Código ${k.type}:${k.code1}:${k.code2}`;
+  return f ? keyLabel(f) : t('fn.code', { code: `${k.type}:${k.code1}:${k.code2}` });
 }
 
 /* ---------- Abas ---------- */
 export function mousePane(tab, ctx) {
   const { st } = ctx;
-  if (st.online === false) return `<div class="soon">Ligue o mouse ou mexa nele para acordar. As configurações aparecem quando ele responder.</div>`;
-  if (!st.config) return `<div class="soon">Lendo a configuração do mouse…</div>`;
+  if (st.online === false) return `<div class="soon">${t('mouse.wake')}</div>`;
+  if (!st.config) return `<div class="soon">${t('ov.readingMouse')}</div>`;
   if (tab === 'dpi') return dpiPane(ctx);
   if (tab === 'perf') return perfPane(ctx);
   if (tab === 'others') return othersPane(ctx);
@@ -125,27 +111,27 @@ function dpiPane({ st }) {
   return `<div class="dz">
     <section class="ov-shell dz-hero"><div class="ov-core">
       <div class="dz-now">
-        <span class="ov-eyebrow">DPI em uso</span>
+        <span class="ov-eyebrow">${t('dpi.inUse')}</span>
         <div class="dz-big"><b data-dz-now>${c.dpis[c.dpiIndex]}</b><small>DPI</small></div>
-        <p class="dz-sub">Nível ${c.dpiIndex + 1} de ${c.dpiCount} · troque pelo botão de DPI do mouse ou clique numa barra.</p>
+        <p class="dz-sub">${t('dpi.sub', { n: c.dpiIndex + 1, count: c.dpiCount })}</p>
         <div class="dz-tools">
-          <div class="dz-count" role="group" aria-label="Número de níveis">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="${n === c.dpiCount ? 'on' : ''}" data-act="dpi-count" data-v="${n}" title="${n} ${n > 1 ? 'níveis' : 'nível'}">${n}</button>`).join('')}</div>
-          <button class="btn-text" data-act="dpi-reset">${icon('undo')}Restaurar padrão</button>
+          <div class="dz-count" role="group" aria-label="${t('dpi.levelCount')}">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="${n === c.dpiCount ? 'on' : ''}" data-act="dpi-count" data-v="${n}" title="${t(n > 1 ? 'dpi.levelsN' : 'dpi.levels1', { n })}">${n}</button>`).join('')}</div>
+          <button class="btn-text" data-act="dpi-reset">${icon('undo')}${t('common.restoreDefaults')}</button>
         </div>
       </div>
-      <div class="dz-chart">${levels.map((d, i) => `<button class="dz-bar ${i === c.dpiIndex ? 'on' : ''}" data-act="dpi-current" data-i="${i}" title="Usar o nível ${i + 1}">
+      <div class="dz-chart">${levels.map((d, i) => `<button class="dz-bar ${i === c.dpiIndex ? 'on' : ''}" data-act="dpi-current" data-i="${i}" title="${t('dpi.useLevel', { n: i + 1 })}">
         <span class="dz-bar-v" data-bar-v="${i}">${d}</span><i style="height:${barH(d)}%" data-bar="${i}"></i><span class="dz-bar-n">${i + 1}</span></button>`).join('')}</div>
     </div></section>
     <div class="dz-levels">${levels.map((d, i) => {
       const pos = dpiToPos(d, r) / 10;
       const on = i === c.dpiIndex;
       return `<section class="ov-shell dz-lvl ${on ? 'on' : ''}" data-act="dpi-current" data-i="${i}"><div class="ov-core">
-        <div class="dz-lvl-top"><span class="dz-lvl-n">${i + 1}</span><span class="ov-label">Nível ${i + 1}</span>
-          ${on ? '<span class="dz-pill">Em uso</span>' : '<span class="dz-use">Usar</span>'}</div>
+        <div class="dz-lvl-top"><span class="dz-lvl-n">${i + 1}</span><span class="ov-label">${t('dpi.level', { n: i + 1 })}</span>
+          ${on ? `<span class="dz-pill">${t('dpi.active')}</span>` : `<span class="dz-use">${t('dpi.use')}</span>`}</div>
         <label class="dz-val"><input type="number" min="${r.min}" max="${r.max}" step="50" value="${d}" data-act="dpi-input" data-i="${i}"><span>DPI</span></label>
         <div class="dz-slider" style="--p:${pos}%">
           <div class="dz-track"><i></i></div>
-          <input type="range" min="0" max="1000" step="1" value="${Math.round(pos * 10)}" data-act="dpi-slider" data-i="${i}" aria-label="DPI do nível ${i + 1}">
+          <input type="range" min="0" max="1000" step="1" value="${Math.round(pos * 10)}" data-act="dpi-slider" data-i="${i}" aria-label="${t('dpi.levelAria', { n: i + 1 })}">
           <div class="dz-marks"><span>${r.min}</span><span style="left:50%">4200</span><span style="left:100%">${r.max}</span></div>
         </div>
       </div></section>`;
@@ -192,23 +178,23 @@ function perfPane({ st, drv }) {
   const never = c.sleep === 0;
   const rate = drv.isCable ? 1000 : RATES[c.rateIdx];
   return `<div class="pf">
-    <h4 class="pf-group">Resposta</h4>
-    ${pfCard('pf-rate', 'Taxa de polling', drv.isCable ? 'Com cabo a taxa é fixa em 1000 Hz.' : 'Quantas vezes por segundo o mouse fala com o computador. Mais alto = menos atraso e mais gasto de bateria.',
+    <h4 class="pf-group">${t('perf.response')}</h4>
+    ${pfCard('pf-rate', t('ov.pollingRate'), t(drv.isCable ? 'perf.rateCable' : 'perf.rateDesc'),
       drv.isCable ? seg('none', [[1000, '1000 Hz', '1 ms']], 1000) : seg('rate', RATES.map((r, i) => [i, `${r} Hz`, LATENCY[r]]), c.rateIdx))}
-    ${pfCard('pf-deb', 'Debounce dos botões', 'Tempo mínimo entre dois cliques. Baixo demais pode gerar clique duplo sozinho.', bigSlider('debounce', 0, 20, c.debounce, 'ms', 'recomendado 4 a 10'))}
-    <h4 class="pf-group">Energia</h4>
-    ${pfCard('pf-sleep', 'Hibernação', 'Sem uso por esse tempo no 2.4G, o mouse entra em repouso para poupar bateria.',
-      `<div class="pf-sleep-row">${never ? '<div class="pf-never"><b>∞</b><span>O mouse nunca dorme. Isso gasta mais bateria.</span></div>' : bigSlider('sleep', 1, 100, c.sleep, 'min', '')}
-        <button class="pf-chip ${never ? 'on' : ''}" data-act="sleep-never">${never ? icon('check') : ''}Nunca dormir</button></div>`)}
-    <h4 class="pf-group">Sensor</h4>
+    ${pfCard('pf-deb', t('perf.debounce'), t('perf.debounceDesc'), bigSlider('debounce', 0, 20, c.debounce, 'ms', t('perf.debounceHint')))}
+    <h4 class="pf-group">${t('perf.power')}</h4>
+    ${pfCard('pf-sleep', t('perf.sleep'), t('perf.sleepDesc'),
+      `<div class="pf-sleep-row">${never ? `<div class="pf-never"><b>∞</b><span>${t('perf.never')}</span></div>` : bigSlider('sleep', 1, 100, c.sleep, 'min', '')}
+        <button class="pf-chip ${never ? 'on' : ''}" data-act="sleep-never">${never ? icon('check') : ''}${t('perf.neverSleep')}</button></div>`)}
+    <h4 class="pf-group">${t('perf.sensor')}</h4>
     <div class="pf-toggles">
-      ${toggleTile('sensor-angle', !!(c.sensor & SENSOR.angleSnap), 'dpi', 'Correção de linha', 'Endireita o movimento em linhas retas. Bom para desenho, ruim para mira.')}
-      ${toggleTile('sensor-motion', !!(c.sensor & SENSOR.motionSync), 'perf', 'Motion Sync', 'Sincroniza o sensor com o envio ao computador para um movimento mais regular.', true)}
-      ${toggleTile('sensor-ripple', !!(c.sensor & SENSOR.ripple), 'wifi', 'Controle de ondulação', 'Remove tremidas em forma de onda em movimentos muito rápidos.', true)}
+      ${toggleTile('sensor-angle', !!(c.sensor & SENSOR.angleSnap), 'dpi', t('perf.angle'), t('perf.angleDesc'))}
+      ${toggleTile('sensor-motion', !!(c.sensor & SENSOR.motionSync), 'perf', 'Motion Sync', t('perf.motionDesc'), true)}
+      ${toggleTile('sensor-ripple', !!(c.sensor & SENSOR.ripple), 'wifi', t('perf.ripple'), t('perf.rippleDesc'), true)}
     </div>
     <div class="pf-pair">
-      ${pfCard('pf-lod', 'Altura de levantamento (LOD)' + EXP, 'Altura em que o sensor para de ler ao levantar o mouse.', seg('lod', [[1, '1 mm', 'mais preciso'], [2, '2 mm', 'mais tolerante']], c.lod === 2 ? 2 : 1))}
-      ${pfCard('pf-scroll', 'Direção da rolagem', 'Sentido da roda do mouse.', seg('scroll', [[0, 'Normal', ''], [1, 'Invertida', '']], c.scroll === 1 ? 1 : 0))}
+      ${pfCard('pf-lod', t('perf.lod') + EXP, t('perf.lodDesc'), seg('lod', [[1, '1 mm', t('perf.lod1')], [2, '2 mm', t('perf.lod2')]], c.lod === 2 ? 2 : 1))}
+      ${pfCard('pf-scroll', t('perf.scroll'), t('perf.scrollDesc'), seg('scroll', [[0, t('perf.normal'), ''], [1, t('perf.reversed'), '']], c.scroll === 1 ? 1 : 0))}
     </div>
   </div>`;
 }
@@ -218,17 +204,17 @@ function othersPane(ctx) {
   return `<div class="others">
     <div class="others-render">${mouseFig(ctx, 380)}</div>
     <div class="others-cards">
-      <div class="ocard"><div><h3>Firmware do mouse: ${esc(st.firmware || '--')}</h3>
-        <p>Atualização de firmware ainda não é suportada no Linux. Use o M HUB oficial para atualizar.</p></div>
-        <button class="btn-white" disabled>Atualizar</button></div>
-      <div class="ocard"><div><h3>Firmware do receptor: ${esc(st.receiverFirmware || '--')}</h3>
-        <p>${drv.isCable ? 'Conecte pelo receptor 2.4G para ler a versão.' : 'Receptor 2.4G conectado.'}</p></div>
-        <button class="btn-white" disabled>Atualizar</button></div>
-      <div class="ocard"><div><h3>Parear o receptor</h3>
-        <p>Com a chave do mouse em 2.4G e o receptor conectado, segure os botões esquerdo, do meio e direito juntos por 3 a 5 segundos.</p></div></div>
-      <div class="ocard"><div><h3>Restaurar configurações de fábrica</h3>
-        <p>DPI, polling, desempenho e botões voltam ao padrão. Faça isso com cuidado.</p></div>
-        <button class="btn-white" data-act="factory">Restaurar</button></div>
+      <div class="ocard"><div><h3>${t('oth.mouseFw', { v: esc(st.firmware || '--') })}</h3>
+        <p>${t('oth.mouseFwDesc')}</p></div>
+        <button class="btn-white" disabled>${t('common.update')}</button></div>
+      <div class="ocard"><div><h3>${t('oth.rxFw', { v: esc(st.receiverFirmware || '--') })}</h3>
+        <p>${t(drv.isCable ? 'oth.rxCable' : 'oth.rxOk')}</p></div>
+        <button class="btn-white" disabled>${t('common.update')}</button></div>
+      <div class="ocard"><div><h3>${t('oth.pair')}</h3>
+        <p>${t('oth.pairMouse')}</p></div></div>
+      <div class="ocard"><div><h3>${t('oth.factory')}</h3>
+        <p>${t('oth.factoryMouse')}</p></div>
+        <button class="btn-white" data-act="factory">${t('common.restore')}</button></div>
     </div>
   </div>`;
 }
@@ -245,17 +231,17 @@ function keymapPane(ctx) {
   const all = keyLabel;
   return `<div class="keymap">
     <div class="kpanel">
-      <div class="ksearch">${icon('search')}<input data-act="key-search" placeholder="Buscar função" value="${esc(ui.keySearch || '')}"></div>
+      <div class="ksearch">${icon('search')}<input data-act="key-search" placeholder="${t('common.searchFn')}" value="${esc(ui.keySearch || '')}"></div>
       <div class="kcats">${CATS.map(([id, label]) => `<button class="kcat ${cat === id ? 'on' : ''}" data-act="key-cat" data-v="${id}">${label}</button>`).join('')}</div>
-      <p class="khint">Clique numa função para ligá-la ao botão selecionado no mouse.</p>
+      <p class="khint">${t('km.hint')}</p>
       <div class="klist">
         ${cat === 'macros' ? macroListHtml(ctx, keys, sel, q) : groups.map((g) => {
           const closed = !q && ui.keyClosed?.includes(g.group);
-          return `<div class="kgroup ${closed ? 'closed' : ''}"><button class="kgroup-title" data-act="key-group" data-v="${esc(g.group)}">${GROUPS[g.group] || g.group}${icon('chevron')}</button>
+          return `<div class="kgroup ${closed ? 'closed' : ''}"><button class="kgroup-title" data-act="key-group" data-v="${esc(g.group)}">${t('fgroup.' + g.group, null, g.group)}${icon('chevron')}</button>
           <div class="kitems ${cat === 'keyboard' ? 'grid' : ''}">${g.keys.map((k) => {
             const on = sameKey(k, keys[sel]);
             return `<button class="kitem ${on ? 'on' : ''}" data-act="key-set" data-k="${esc(JSON.stringify([k.type, k.code1, k.code2, k.code3]))}">${esc(all(k))}</button>`;
-          }).join('')}</div></div>`; }).join('') || '<div class="kempty">Nada encontrado.</div>'}
+          }).join('')}</div></div>`; }).join('') || `<div class="kempty">${t('common.noResults')}</div>`}
       </div>
     </div>
     <div class="kmouse">
@@ -264,7 +250,7 @@ function keymapPane(ctx) {
         ${BUTTONS.map((b, i) => { const val = esc(keyName(keys[i], drv)); return `<button class="kchip ${b.side} ${i === sel ? 'on' : ''}" style="top:${b.y * 100}%" data-act="key-sel" data-i="${i}" title="${b.label}: ${val}">
           <span class="kchip-val">${val}</span><i class="lead"></i></button>`; }).join('')}
       </div>
-      <button class="btn-ghost" data-act="keys-reset">${icon('undo')}Restaurar padrão</button>
+      <button class="btn-ghost" data-act="keys-reset">${icon('undo')}${t('common.restoreDefaults')}</button>
     </div>
   </div>`;
 }
@@ -319,7 +305,7 @@ export function bindMousePane(root, ctx) {
 
   // Outros
   on('[data-act="factory"]', 'click', async () => {
-    const ok = await ctx.confirm('Restaurar configurações de fábrica?', 'DPI, taxa de polling, desempenho e os 5 botões voltam ao padrão do M HUB. Isso não pode ser desfeito.');
+    const ok = await ctx.confirm(t('oth.factoryQ'), t('oth.factoryMouseQ'));
     if (!ok) return;
     await ctx.write({ ...DEFAULT_CONFIG, dpis: [...DEFAULT_CONFIG.dpis] }, true);
     await ctx.writeKeys(DEFAULT_KEYS.map((k) => ({ ...k })));
@@ -347,7 +333,7 @@ export function bindMousePane(root, ctx) {
     const keys = (st.keys || DEFAULT_KEYS).map((k) => ({ ...k }));
     // O botão esquerdo precisa continuar clicando em algum lugar: não deixamos desativar.
     if (sel === 0 && !(type === 32 && code1 === 1)) {
-      const ok = await ctx.confirm('Mudar o botão esquerdo?', 'Sem clique esquerdo fica difícil usar o computador. Se precisar voltar, use outro mouse ou o touchpad e clique em Restaurar padrão.');
+      const ok = await ctx.confirm(t('km.leftQ'), t('km.leftQBody'));
       if (!ok) return;
     }
     keys[sel] = { type, code1, code2, code3 };

@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('mhub', {
   status: (list) => ipcRenderer.send('status', list),
   getPrefs: () => ipcRenderer.invoke('prefs:get'),
   setPref: (key, value) => ipcRenderer.invoke('prefs:set', key, value).then(() => undefined),
+  // Idioma escolhido na interface ('en' | 'pt-BR'): bandeja, notificações e avisos de Caps Lock seguem ele.
+  setLang: (lang) => ipcRenderer.invoke('prefs:set', 'lang', lang).then(() => undefined),
   version: () => ipcRenderer.invoke('version'),
   // { flatpak }: o que muda quando o app roda no Flatpak.
   env: () => ipcRenderer.invoke('env'),

@@ -1,7 +1,7 @@
 {
   "name": "mhub-linux",
   "productName": "OpenMHub",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Unofficial open-source configurator for MCHOSE mice and keyboards on Linux",
   "main": "main.js",
   "license": "MIT",

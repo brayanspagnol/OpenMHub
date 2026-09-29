@@ -7,6 +7,7 @@ import {
 } from '../data/keyboard-ut98.js';
 import { macroPanelHtml, bindMacroPanel, getMacros, itemsToActions, actionsToItems } from './macros.js';
 import { KB_MACRO_TYPE, KB_MACRO_AREA, KB_MACRO_MAX, KB_MACRO_MODES, macroKey, macroBytes } from '../drivers/sinowealth.js';
+import { t } from '../i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const toHex = (rgb) => '#' + (rgb || [0, 0, 0]).map((v) => v.toString(16).padStart(2, '0')).join('');
@@ -15,11 +16,11 @@ const sameVal = (a, b) => a && b && a.length === b.length && a.every((v, i) => v
 
 /* ---------- Funções atribuíveis ---------- */
 const CATS = [
-  ['basic', 'Teclas', BASIC_KEYS],
-  ['mouse', 'Mouse', MOUSE_KEYS],
-  ['media', 'Mídia', MEDIA_KEYS],
-  ['shortcut', 'Atalhos', SHORTCUT_KEYS],
-  ['other', 'Outros', OTHER_KEYS],
+  ['basic', t('kb.cat.basic'), BASIC_KEYS],
+  ['mouse', t('kb.cat.mouse'), MOUSE_KEYS],
+  ['media', t('kb.cat.media'), MEDIA_KEYS],
+  ['shortcut', t('kb.cat.shortcut'), SHORTCUT_KEYS],
+  ['other', t('kb.cat.other'), OTHER_KEYS],
   ['macros', 'Macros', []],
 ];
 const ALL_FUNCS = [...CATS.flatMap(([, , list]) => list), ...LAYER_KEYS];
@@ -38,8 +39,8 @@ function funcName(v, key, layer, macros = []) {
   if (f) return f[0];
   if (v[0] === 13) return layerName(v);
   if (v[0] === KB_MACRO_TYPE) return `Macro: ${macros[v[3]]?.name || v[3] + 1}`;
-  if (key && sameVal(v, defOf(key, layer))) return 'Função de fábrica';
-  return `Código ${v.join(':')}`;
+  if (key && sameVal(v, defOf(key, layer))) return t('kb.factoryFn');
+  return t('fn.code', { code: v.join(':') });
 }
 
 /* ---------- Desenho do teclado ---------- */
@@ -55,13 +56,13 @@ function keyboardFig({ sel, cls = () => '', label = (k) => esc(k.l), style = () 
 /* ---------- Abas ---------- */
 export function keyboardPane(tab, ctx) {
   const { st } = ctx;
-  if (st.online === false) return `<div class="soon">Ligue o teclado ou aperte uma tecla para acordar. As configurações aparecem quando ele responder.</div>`;
+  if (st.online === false) return `<div class="soon">${t('kb.wake')}</div>`;
   if (!st.kb) {
-    if (st.model && !st.canWrite) return `<div class="soon">Modelo ${esc(st.model)}: a configuração deste teclado ainda não é suportada.</div>`;
-    if (st.sleeping) return `<div class="soon">Teclado em repouso. Aperte uma tecla para acordar; a configuração é lida em seguida.</div>`;
-    return `<div class="soon">Lendo a configuração do teclado…</div>`;
+    if (st.model && !st.canWrite) return `<div class="soon">${t('kb.unsupported', { model: esc(st.model) })}</div>`;
+    if (st.sleeping) return `<div class="soon">${t('kb.asleep')}</div>`;
+    return `<div class="soon">${t('ov.readingKb')}</div>`;
   }
-  const banner = st.sleeping ? `<div class="kb-sleep">${icon('info')}Teclado em repouso: aperte uma tecla antes de mudar algo.</div>` : '';
+  const banner = st.sleeping ? `<div class="kb-sleep">${icon('info')}${t('kb.asleepBanner')}</div>` : '';
   let body = '';
   if (tab === 'light') body = lightPane(ctx);
   else if (tab === 'keymap') body = keymapPane(ctx);
@@ -92,16 +93,16 @@ function lightPane({ st, ui }) {
     const paint = ui.paint || '#ff0000';
     const pend = ui.diyPending || {};
     const diy = st.kb.diy || {};
-    right = `<div class="pcard"><div class="pcard-head"><div><h3>Cores por tecla</h3>
-        <p>Escolha a cor e clique nas teclas para pintar. Depois salve no teclado.</p></div></div>
+    right = `<div class="pcard"><div class="pcard-head"><div><h3>${t('kb.diy')}</h3>
+        <p>${t('kb.diyDesc')}</p></div></div>
       <div class="swatches">${PALETTE.map((c) => `<button class="sw ${c === paint ? 'on' : ''}" style="--sw:${c}" data-act="paint" data-v="${c}"></button>`).join('')}
-        <label class="sw-pick" title="Outra cor"><input type="color" data-act="paint-pick" value="${paint}"></label>
-        <button class="sw off ${paint === '#000000' ? 'on' : ''}" data-act="paint" data-v="#000000" title="Apagada"></button></div>
+        <label class="sw-pick" title="${t('common.otherColor')}"><input type="color" data-act="paint-pick" value="${paint}"></label>
+        <button class="sw off ${paint === '#000000' ? 'on' : ''}" data-act="paint" data-v="#000000" title="${t('kb.unlit')}"></button></div>
       <div class="kb-actions">
-        <button class="btn-outline" data-act="paint-all">Pintar todas</button>
+        <button class="btn-outline" data-act="paint-all">${t('kb.paintAll')}</button>
         <span class="spacer"></span>
-        <button class="btn-ghost" data-act="diy-cancel" ${Object.keys(pend).length ? '' : 'disabled'}>Descartar</button>
-        <button class="btn-primary" data-act="diy-save" ${Object.keys(pend).length ? '' : 'disabled'}>Salvar cores</button>
+        <button class="btn-ghost" data-act="diy-cancel" ${Object.keys(pend).length ? '' : 'disabled'}>${t('kb.discard')}</button>
+        <button class="btn-primary" data-act="diy-save" ${Object.keys(pend).length ? '' : 'disabled'}>${t('kb.saveColors')}</button>
       </div></div>`;
     const figure = keyboardFig({
       act: 'diy-key',
@@ -119,20 +120,20 @@ function lightPane({ st, ui }) {
   const bright = m ? uiBright(m.brightness) : 4;
   const speed = m ? m.speed : 3;
   right = `
-    <div class="pcard ${bDis && sDis ? 'dim' : ''}"><div class="pcard-head"><div><h3>Velocidade e brilho</h3>
-      <p>${bDis && sDis ? 'Este efeito não tem ajuste.' : 'Valem só para o efeito escolhido.'}</p></div></div>
-      ${slider('lspeed', 0, 5, speed, 'Velocidade', sDis)}
-      ${slider('lbright', 0, 4, bright, 'Brilho', bDis)}
+    <div class="pcard ${bDis && sDis ? 'dim' : ''}"><div class="pcard-head"><div><h3>${t('kb.speedBright')}</h3>
+      <p>${t(bDis && sDis ? 'kb.noAdjust' : 'kb.perEffect')}</p></div></div>
+      ${slider('lspeed', 0, 5, speed, t('kb.speed'), sDis)}
+      ${slider('lbright', 0, 4, bright, t('kb.brightness'), bDis)}
     </div>
-    <div class="pcard ${cDis ? 'dim' : ''}"><div class="pcard-head"><div><h3>Cor</h3>
-      <p>${cDis ? 'Este efeito usa as cores próprias.' : 'Colorido alterna as cores do arco-íris; cor única usa a cor abaixo.'}</p></div></div>
+    <div class="pcard ${cDis ? 'dim' : ''}"><div class="pcard-head"><div><h3>${t('kb.color')}</h3>
+      <p>${t(cDis ? 'kb.ownColors' : 'kb.colorDesc')}</p></div></div>
       <div class="radios">
-        ${radio('lmulti', 1, !cDis && multi, 'Colorido', cDis)}
-        ${radio('lmulti', 0, !cDis && !multi, 'Cor única', cDis)}
+        ${radio('lmulti', 1, !cDis && multi, t('kb.multi'), cDis)}
+        ${radio('lmulti', 0, !cDis && !multi, t('kb.single'), cDis)}
       </div>
       <div class="swatches ${cDis || multi ? 'disabled' : ''}">
         ${PALETTE.map((c) => `<button class="sw ${c === color ? 'on' : ''}" style="--sw:${c}" data-act="lcolor" data-v="${c}" ${cDis || multi ? 'disabled' : ''}></button>`).join('')}
-        <label class="sw-pick" title="Outra cor"><input type="color" data-act="lcolor-pick" value="${color}" ${cDis || multi ? 'disabled' : ''}></label>
+        <label class="sw-pick" title="${t('common.otherColor')}"><input type="color" data-act="lcolor-pick" value="${color}" ${cDis || multi ? 'disabled' : ''}></label>
         <span class="sw-hex">${color.toUpperCase()}</span>
       </div>
     </div>`;
@@ -192,19 +193,19 @@ function keymapPane(ctx) {
       ${figure}
       <div class="kb-layers">
         ${LAYERS.map((l) => `<button class="kb-layer ${layer === l.id ? 'on' : ''}" data-act="kb-layer" data-v="${l.id}">${l.name}</button>`).join('')}
-        <button class="btn-ghost" data-act="kb-reset">${icon('undo')}Restaurar padrão</button>
+        <button class="btn-ghost" data-act="kb-reset">${icon('undo')}${t('common.restoreDefaults')}</button>
       </div>
     </div>
-    <div class="kb-sel">${sel ? `<b>${esc(selKey?.l || sel)}</b><span>${LAYERS[layer].prefix} faz agora: <b>${esc(funcName(cur, selKey, layer, macros))}</b></span>`
-      : '<span>Clique numa tecla do desenho e depois escolha a função abaixo.</span>'}</div>
+    <div class="kb-sel">${sel ? `<b>${esc(selKey?.l || sel)}</b><span>${t('kb.selDoes', { prefix: LAYERS[layer].prefix })} <b>${esc(funcName(cur, selKey, layer, macros))}</b></span>`
+      : `<span>${t('kb.pickKey')}</span>`}</div>
     <div class="kb-funcs">
       <div class="kb-funcs-head">
         <div class="kb-cats">${CATS.map(([id, label]) => `<button class="kb-cat ${cat === id ? 'on' : ''}" data-act="kb-cat" data-v="${id}">${label}</button>`).join('')}</div>
         <span class="spacer"></span>
-        <div class="ksearch">${icon('search')}<input data-act="kb-search" placeholder="Buscar função" value="${esc(ui.kbSearch || '')}"></div>
+        <div class="ksearch">${icon('search')}<input data-act="kb-search" placeholder="${t('common.searchFn')}" value="${esc(ui.kbSearch || '')}"></div>
       </div>
       ${cat === 'macros' ? `<div class="kb-macros">${macroPanelHtml(kbMacroAdapter(ctx), q)}</div>` : `<div class="kb-flist ${cat === 'basic' ? 'grid' : ''} ${sel ? '' : 'idle'}">
-        ${list.map((f) => `<button class="kitem ${cur && sameVal(f.slice(1), cur) ? 'on' : ''}" data-act="kb-set" data-v="${f.slice(1).join(',')}" ${sel ? '' : 'disabled'}>${esc(f[0])}</button>`).join('') || '<div class="kempty">Nada encontrado.</div>'}
+        ${list.map((f) => `<button class="kitem ${cur && sameVal(f.slice(1), cur) ? 'on' : ''}" data-act="kb-set" data-v="${f.slice(1).join(',')}" ${sel ? '' : 'disabled'}>${esc(f[0])}</button>`).join('') || `<div class="kempty">${t('common.noResults')}</div>`}
       </div>`}
     </div>
   </div>`;
@@ -221,20 +222,20 @@ function perfPane({ st }) {
   const mins = never ? 1 : p.sleepMin;
   const pct = ((mins - 0.5) / (20 - 0.5)) * 100;
   const left = [
-    card('Hibernação <small>(minutos)</small>', 'Sem uso por esse tempo em 2.4G ou Bluetooth, o teclado entra em repouso.', {
+    card(t('kb.sleepTitle'), t('kb.sleepDesc'), {
       below: `<div class="row-gap"><div class="pslider" style="--p:${pct}%;--c:var(--accent)">
           <input type="range" data-act="kb-sleep" min="0.5" max="20" step="0.5" value="${mins}">
           <div class="pval"><b data-val>${mins}</b> min</div></div>
-        ${radio('kb-sleep-never', 1, never, 'Nunca dormir')}</div>`,
+        ${radio('kb-sleep-never', 1, never, t('perf.neverSleep'))}</div>`,
     }),
-    card('Taxa de polling <small>(Hz)</small>', 'Neste modelo a taxa é fixa em 1000 Hz.', {
+    card(t('kb.rateTitle'), t('kb.rateDesc'), {
       below: `<div class="radios">${radio('none', 0, true, '1000')}</div>`,
     }),
   ];
   const right = [
-    card('Top Speed (baixa latência)', 'Modo de latência ultrabaixa. Se alguma tecla repetir sozinha (duplo toque), desligue.', { inline: sw('kb-fast', p.fastMode) }),
-    card('Modo Mac', 'Troca o layout das teclas especiais para o macOS. Ligar desativa o bloqueio da tecla Win.', { inline: sw('kb-mac', p.mac) }),
-    card('Bloquear tecla Win', 'A tecla Win (Super) deixa de funcionar, para não sair do jogo sem querer.', { inline: sw('kb-win', p.winLock, p.mac) }, p.mac ? 'dim' : ''),
+    card(t('kb.fast'), t('kb.fastDesc'), { inline: sw('kb-fast', p.fastMode) }),
+    card(t('ov.mac'), t('kb.macDesc'), { inline: sw('kb-mac', p.mac) }),
+    card(t('kb.winLock'), t('kb.winLockDesc'), { inline: sw('kb-win', p.winLock, p.mac) }, p.mac ? 'dim' : ''),
   ];
   return `<div class="perf-grid"><div class="col">${left.join('')}</div><div class="col">${right.join('')}</div></div>`;
 }
@@ -245,31 +246,31 @@ function othersPane({ st, drv }) {
   return `<div class="others kb-others">
     <div class="kb-others-fig">${keyboardFig({ cls: () => 'ro', label: () => '' })}</div>
     <div class="others-cards">
-      <div class="ocard"><div><h3>Modelo: ${esc(st.kb.model || st.model || '--')}</h3>
-        <p>Identificado pelo próprio teclado (código ${esc(drv.raw?.kb?.password || '--')}).</p></div>
-        <button class="btn-white" data-act="kb-reload">Reler</button></div>
-      <div class="ocard"><div><h3>Firmware do teclado: --</h3>
-        <p>O protocolo não informa a versão. Atualização de firmware não é suportada no Linux; use o M HUB oficial.</p></div>
-        <button class="btn-white" disabled>Atualizar</button></div>
-      ${drv.wired ? `<div class="ocard"><div><h3>Conectado pelo cabo</h3>
-        <p>${esc(drv.productName || 'Teclado MCHOSE')} (${id}). Suporte ao modo com fio ainda em teste.</p></div></div>`
-      : `<div class="ocard"><div><h3>Receptor 2.4G</h3>
+      <div class="ocard"><div><h3>${t('kb.model', { model: esc(st.kb.model || st.model || '--') })}</h3>
+        <p>${t('kb.modelDesc', { code: esc(drv.raw?.kb?.password || '--') })}</p></div>
+        <button class="btn-white" data-act="kb-reload">${t('kb.reload')}</button></div>
+      <div class="ocard"><div><h3>${t('kb.fw')}</h3>
+        <p>${t('kb.fwDesc')}</p></div>
+        <button class="btn-white" disabled>${t('common.update')}</button></div>
+      ${drv.wired ? `<div class="ocard"><div><h3>${t('kb.wired')}</h3>
+        <p>${t('kb.wiredDesc', { name: esc(drv.productName || t('kb.defaultName')), id })}</p></div></div>`
+      : `<div class="ocard"><div><h3>${t('via.receiver')}</h3>
         <p>SINOWEALTH ${esc(drv.productName || '')} (${id}).</p></div>
-        <button class="btn-white" disabled>Atualizar</button></div>`}
-      <div class="ocard"><div><h3>Parear o receptor</h3>
-        <p>Com o teclado no modo 2.4G, segure Fn + \` por 3 segundos até a luz piscar e deixe o receptor conectado ao computador perto do teclado.</p></div></div>
-      <div class="ocard"><div><h3>Restaurar configurações de fábrica</h3>
-        <p>${drv.wired ? 'Pelo cabo esta função não está disponível. Use o receptor 2.4G.' : 'Iluminação, teclas, desempenho e macros voltam ao padrão. Faça isso com cuidado.'}</p></div>
-        <button class="btn-white" data-act="kb-factory" ${drv.wired ? 'disabled' : ''}>Restaurar</button></div>
+        <button class="btn-white" disabled>${t('common.update')}</button></div>`}
+      <div class="ocard"><div><h3>${t('oth.pair')}</h3>
+        <p>${t('kb.pairDesc')}</p></div></div>
+      <div class="ocard"><div><h3>${t('oth.factory')}</h3>
+        <p>${t(drv.wired ? 'kb.factoryWired' : 'kb.factoryDesc')}</p></div>
+        <button class="btn-white" data-act="kb-factory" ${drv.wired ? 'disabled' : ''}>${t('common.restore')}</button></div>
     </div>
   </div>`;
 }
 
 /* ---------- Macros ---------- */
 const KB_MODES = [
-  { id: KB_MACRO_MODES.hold, icon: 'hold', name: 'Repetir enquanto segura', tip: 'A macro se repete enquanto a tecla está pressionada e para ao soltar.' },
-  { id: KB_MACRO_MODES.anyKey, icon: 'anyKey', name: 'Repetir até outra tecla', tip: 'A macro se repete até outra tecla ser pressionada.' },
-  { id: KB_MACRO_MODES.once, icon: 'once', name: 'Executar uma vez', tip: 'Cada toque na tecla executa a macro uma vez.' },
+  { id: KB_MACRO_MODES.hold, icon: 'hold', name: t('mx.hold'), tip: t('mx.holdTipKey') },
+  { id: KB_MACRO_MODES.anyKey, icon: 'anyKey', name: t('mx.anyKey'), tip: t('mx.anyKeyTipKey') },
+  { id: KB_MACRO_MODES.once, icon: 'once', name: t('mx.once'), tip: t('mx.onceTipKey') },
 ];
 const toKb = (list) => list.map((m) => ({ name: m.name, type: m.type, actions: itemsToActions(m.items) }));
 
@@ -281,7 +282,7 @@ function kbMacroAdapter(ctx) {
   const cur = sel ? st.kb.keys[layer]?.[sel] : null;
   const allKeys = st.kb.keys || {};
   return {
-    drv, ctx, noun: 'teclado',
+    drv, ctx, noun: t('noun.keyboard'),
     max: KB_MACRO_MAX, nameMax: 15, delayMax: 60000, wheel: false, defaultMode: KB_MACRO_MODES.once,
     modes: KB_MODES,
     // A área guarda tabela (4 bytes por macro), nome e ações: o nome também conta.
@@ -325,12 +326,12 @@ function kbMacroAdapter(ctx) {
     },
     boundIndex: cur && cur[0] === KB_MACRO_TYPE ? cur[3] : -1,
     canBind: !!sel && !LOCKED.includes(sel),
-    tip: sel ? `Clique numa macro para ligar à tecla ${selKey?.l || sel} (${LAYERS[layer].short}).`
-      : 'Escolha uma tecla no desenho e depois clique numa macro para ligar a ela.',
-    emptyTip: 'Crie uma e clique nela para ligar à tecla escolhida.',
-    deleteTip: 'As teclas ligadas a ela voltam à função padrão.',
+    tip: sel ? t('kb.macroTip', { key: selKey?.l || sel, layer: LAYERS[layer].short })
+      : t('kb.macroPick'),
+    emptyTip: t('kb.macroEmpty'),
+    deleteTip: t('kb.macroDelete'),
     bind(i, m) {
-      ctx.run(() => drv.writeKeys({ [sel]: macroKey(i, m.type) }, layer), 'Macro ligada à tecla');
+      ctx.run(() => drv.writeKeys({ [sel]: macroKey(i, m.type) }, layer), t('kb.macroBound'));
     },
   };
 }
@@ -348,7 +349,7 @@ export function bindKeyboardPane(root, ctx) {
     const id = +el.dataset.v;
     if (id === cur) return;
     ui.diyPending = null;
-    ctx.run(() => drv.writeLighting({ mode: id }), 'Efeito salvo no teclado');
+    ctx.run(() => drv.writeLighting({ mode: id }), t('kb.effectSaved'));
   });
   const liveSlider = (act, write) => {
     on(`[data-act="${act}"]`, 'input', (el) => {
@@ -359,11 +360,11 @@ export function bindKeyboardPane(root, ctx) {
     });
     on(`[data-act="${act}"]`, 'change', (el) => write(+el.value));
   };
-  liveSlider('lspeed', (v) => ctx.run(() => drv.writeLighting({ speed: v }), 'Velocidade salva no teclado'));
-  liveSlider('lbright', (v) => ctx.run(() => drv.writeLighting({ brightness: v }), 'Brilho salvo no teclado'));
-  on('[data-act="lmulti"]', 'click', (el) => ctx.run(() => drv.writeLighting({ multi: el.dataset.v === '1' }), 'Salvo no teclado'));
-  on('[data-act="lcolor"]', 'click', (el) => ctx.run(() => drv.writeLighting({ color: fromHex(el.dataset.v) }), 'Cor salva no teclado'));
-  on('[data-act="lcolor-pick"]', 'change', (el) => ctx.run(() => drv.writeLighting({ color: fromHex(el.value) }), 'Cor salva no teclado'));
+  liveSlider('lspeed', (v) => ctx.run(() => drv.writeLighting({ speed: v }), t('kb.speedSaved')));
+  liveSlider('lbright', (v) => ctx.run(() => drv.writeLighting({ brightness: v }), t('kb.brightSaved')));
+  on('[data-act="lmulti"]', 'click', (el) => ctx.run(() => drv.writeLighting({ multi: el.dataset.v === '1' }), t('kb.saved')));
+  on('[data-act="lcolor"]', 'click', (el) => ctx.run(() => drv.writeLighting({ color: fromHex(el.dataset.v) }), t('kb.colorSaved')));
+  on('[data-act="lcolor-pick"]', 'change', (el) => ctx.run(() => drv.writeLighting({ color: fromHex(el.value) }), t('kb.colorSaved')));
 
   // Cores por tecla (efeito personalizado)
   on('[data-act="paint"]', 'click', (el) => { ui.paint = el.dataset.v; ctx.rerender(); });
@@ -385,7 +386,7 @@ export function bindKeyboardPane(root, ctx) {
   on('[data-act="diy-save"]', 'click', () => {
     const pend = ui.diyPending || {};
     const colors = Object.fromEntries(Object.entries(pend).map(([k, h]) => [k, fromHex(h)]));
-    ctx.run(async () => { await drv.writeDiy(colors); ui.diyPending = null; }, 'Cores salvas no teclado');
+    ctx.run(async () => { await drv.writeDiy(colors); ui.diyPending = null; }, t('kb.colorsSaved'));
   });
 
   // Teclas
@@ -413,18 +414,18 @@ export function bindKeyboardPane(root, ctx) {
     const layer = ui.kbLayer || 0;
     if (layer !== 0 && v[0] === 13) return;   // Fn e Fn2 só na camada normal
     if (layer === 0 && v.every((x) => x === 0)) {
-      const ok = await ctx.confirm('Desativar esta tecla?', 'Ela deixa de funcionar até você escolher outra função ou restaurar o padrão.');
+      const ok = await ctx.confirm(t('kb.disableQ'), t('kb.disableQBody'));
       if (!ok) return;
     }
-    ctx.run(() => drv.writeKeys({ [k]: v }, layer), 'Tecla salva no teclado');
+    ctx.run(() => drv.writeKeys({ [k]: v }, layer), t('kb.keySaved'));
   });
   on('[data-act="kb-reset"]', 'click', async () => {
     const layer = ui.kbLayer || 0;
-    const ok = await ctx.confirm('Restaurar as teclas?', layer === 2
-      ? 'Todas as teclas da camada Fn2 ficam sem função, como vêm de fábrica.'
-      : `Todas as teclas da ${LAYERS[layer].short} voltam à função de fábrica.`);
+    const ok = await ctx.confirm(t('kb.resetQ'), layer === 2
+      ? t('kb.resetFn2')
+      : t('kb.resetLayer', { layer: LAYERS[layer].short }));
     if (!ok) return;
-    ctx.run(() => drv.resetKeys(layer), 'Teclas restauradas');
+    ctx.run(() => drv.resetKeys(layer), t('kb.keysRestored'));
   });
 
   // Desempenho
@@ -433,17 +434,17 @@ export function bindKeyboardPane(root, ctx) {
     box.style.setProperty('--p', `${((el.value - el.min) / (el.max - el.min)) * 100}%`);
     box.querySelector('[data-val]').textContent = el.value;
   });
-  on('[data-act="kb-sleep"]', 'change', (el) => ctx.run(() => drv.writePerformance({ sleep: Math.round(+el.value * 2) }), 'Salvo no teclado'));
-  on('[data-act="kb-sleep-never"]', 'click', () => ctx.run(() => drv.writePerformance({ sleep: perf.sleep === 0 ? 2 : 0 }), 'Salvo no teclado'));
-  on('[data-act="kb-fast"]', 'click', () => ctx.run(() => drv.writePerformance({ fastMode: !perf.fastMode }), 'Salvo no teclado'));
-  on('[data-act="kb-mac"]', 'click', () => ctx.run(() => drv.writePerformance({ mac: !perf.mac }), 'Salvo no teclado'));
-  on('[data-act="kb-win"]', 'click', () => ctx.run(() => drv.writePerformance({ winLock: !perf.winLock }), 'Salvo no teclado'));
+  on('[data-act="kb-sleep"]', 'change', (el) => ctx.run(() => drv.writePerformance({ sleep: Math.round(+el.value * 2) }), t('kb.saved')));
+  on('[data-act="kb-sleep-never"]', 'click', () => ctx.run(() => drv.writePerformance({ sleep: perf.sleep === 0 ? 2 : 0 }), t('kb.saved')));
+  on('[data-act="kb-fast"]', 'click', () => ctx.run(() => drv.writePerformance({ fastMode: !perf.fastMode }), t('kb.saved')));
+  on('[data-act="kb-mac"]', 'click', () => ctx.run(() => drv.writePerformance({ mac: !perf.mac }), t('kb.saved')));
+  on('[data-act="kb-win"]', 'click', () => ctx.run(() => drv.writePerformance({ winLock: !perf.winLock }), t('kb.saved')));
 
   // Outros
-  on('[data-act="kb-reload"]', 'click', () => ctx.run(() => drv.reload(), 'Configuração relida'));
+  on('[data-act="kb-reload"]', 'click', () => ctx.run(() => drv.reload(), t('kb.reloaded')));
   on('[data-act="kb-factory"]', 'click', async () => {
-    const ok = await ctx.confirm('Restaurar configurações de fábrica?', 'Iluminação, teclas das duas camadas, desempenho e macros do teclado voltam ao padrão. Isso não pode ser desfeito.');
+    const ok = await ctx.confirm(t('oth.factoryQ'), t('kb.factoryQBody'));
     if (!ok) return;
-    ctx.run(() => drv.factoryReset(), 'Teclado restaurado');
+    ctx.run(() => drv.factoryReset(), t('kb.restored'));
   });
 }
