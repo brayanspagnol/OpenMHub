@@ -1,6 +1,6 @@
 # Maintainer: Brayan Spagnol <brayanspagnol at users dot noreply dot github dot com>
 pkgname=openmhub
-pkgver=0.3.0
+pkgver=0.3.1
 pkgrel=1
 pkgdesc='Unofficial configurator for MCHOSE mice and keyboards (battery, DPI, lighting, macros)'
 arch=('any')
@@ -11,7 +11,7 @@ provides=('mhub-linux')
 conflicts=('mhub-linux')
 install=openmhub.install
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('68d56838c003f51f24dc3864bfdec6e91809b2e23be58544b8f408abcbf82339')
+sha256sums=('f6f133e627aa0777ad5f5d41ec937b9306062efe32131157ab9262e8a66af29a')
 
 package() {
   cd "OpenMHub-$pkgver"
