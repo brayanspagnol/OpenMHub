@@ -65,7 +65,7 @@ modules:
       - type: git
         url: https://github.com/brayanspagnol/OpenMHub.git
         tag: v0.2.0
-        # commit: filled by packaging/flatpak/update-commit.sh after tagging
+        commit: ce888f88fdc5d3eace6bfc804624810a0aaeee7d
         dest: src
         x-checker-data:
           type: git
