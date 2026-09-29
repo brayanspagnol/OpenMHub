@@ -53,14 +53,39 @@ export function findModel(model, { kind, vendorId, productId } = {}) {
   return found;
 }
 
-// O catálogo traz os nomes das cores em português; em inglês o nome sai do id (vindo das classes
-// em inglês do M HUB), sem o modelo e com as palavras estranhas do bundle corrigidas.
+// O catálogo traz os nomes das cores em português; nos outros idiomas o nome sai do id (vindo das
+// classes em inglês do M HUB), sem o modelo e com as palavras estranhas do bundle corrigidas.
+// Em espanhol e francês cada palavra é traduzida (palavra a palavra, como os nomes do catálogo).
 const MODEL_WORD = /^(a\d|ax\d|v\d|v9t|z75s?|kx75|gx87(v2)?|ace\d+(air\d|-?v\d)?|god\d+|k87|pro|ultra|r7|copy|headset)$/;
 const EN_WORD = { sliver: 'silver', golden: 'gold', shuang: 'orange', yunwu: 'mist', loose: 'moss', barde: 'burgundy', shaded: 'gradient', blueness: 'bluish', glaze: 'glazed', shallow: 'soft',
   bmw: 'BMW', halo: 'Halo', blue2: 'blue 2', blue3: 'blue 3', pink2: 'pink 2' };
-export function colorLabelEn(id) {
-  const words = id.split('-').filter((w) => !MODEL_WORD.test(w)).map((w) => EN_WORD[w] || w)
+const WORD = {
+  es: { white: 'blanco', black: 'negro', red: 'rojo', pink: 'rosa', blue: 'azul', green: 'verde', orange: 'naranja', gray: 'gris',
+    purple: 'morado', yellow: 'amarillo', brown: 'marrón', cyan: 'cian', navy: 'marino', silver: 'plata', gold: 'dorado',
+    deep: 'profundo', dark: 'oscuro', light: 'claro', soft: 'suave', pure: 'puro', bluish: 'azulado', frosted: 'escarchado',
+    glazed: 'vidriado', gradient: 'degradado', sea: 'mar', sky: 'cielo', star: 'estrella', night: 'noche', mist: 'niebla',
+    smoke: 'humo', snow: 'nieve', ice: 'hielo', cloud: 'nube', stone: 'piedra', sand: 'arena', forest: 'bosque', moss: 'musgo',
+    feather: 'pluma', wave: 'ola', north: 'norte', tea: 'té', peach: 'melocotón', apricot: 'albaricoque', cherry: 'cereza',
+    blackberry: 'mora', champagne: 'champán', burgundy: 'burdeos', moonrock: 'roca lunar', side: 'lateral', line: 'línea' },
+  fr: { white: 'blanc', black: 'noir', red: 'rouge', pink: 'rose', blue: 'bleu', green: 'vert', orange: 'orange', gray: 'gris',
+    purple: 'violet', yellow: 'jaune', brown: 'marron', cyan: 'cyan', navy: 'marine', silver: 'argent', gold: 'or',
+    deep: 'profond', dark: 'foncé', light: 'clair', soft: 'doux', pure: 'pur', bluish: 'bleuté', frosted: 'givré',
+    glazed: 'vitrifié', gradient: 'dégradé', sea: 'mer', sky: 'ciel', star: 'étoile', night: 'nuit', mist: 'brume',
+    smoke: 'fumée', snow: 'neige', ice: 'glace', cloud: 'nuage', stone: 'pierre', sand: 'sable', forest: 'forêt', moss: 'mousse',
+    feather: 'plume', wave: 'vague', north: 'nord', tea: 'thé', peach: 'pêche', apricot: 'abricot', cherry: 'cerise',
+    blackberry: 'mûre', champagne: 'champagne', burgundy: 'bordeaux', moonrock: 'roche lunaire', side: 'latéral', line: 'ligne' },
+};
+export function colorLabelEn(id, to = 'en') {
+  let words = id.split('-').filter((w) => !MODEL_WORD.test(w)).map((w) => EN_WORD[w] || w)
     .filter((w, i, a) => w !== a[i - 1]);
+  const dict = WORD[to];
+  if (dict) {
+    // Espanhol e francês: o modificador vem depois (azul profundo, blanc brume); nomes próprios e números não mudam de lugar.
+    words = words.flatMap((w) => w.split(' '));
+    const num = words.at(-1) && /^\d+$/.test(words.at(-1)) ? [words.pop()] : [];
+    if (words.every((w) => w in dict)) words.reverse();
+    words = [...words.map((w) => dict[w] || w), ...num];
+  }
   const s = words.join(' ') || id;
   return s[0].toUpperCase() + s.slice(1);
 }
@@ -69,7 +94,7 @@ export function colorLabelEn(id) {
 export function colorsFor(model, opts) {
   const m = findModel(model, opts);
   return m ? m.colors.map((c) => ({
-    id: c.id, label: lang === 'pt-BR' ? c.label : colorLabelEn(c.id), hex: c.dot.startsWith('url(') ? `url('${imgUrl(c.dot.slice(4, -1))}')` : c.dot,
+    id: c.id, label: lang === 'pt-BR' ? c.label : colorLabelEn(c.id, lang), hex: c.dot.startsWith('url(') ? `url('${imgUrl(c.dot.slice(4, -1))}')` : c.dot,
   })) : [];
 }
 

@@ -82,8 +82,8 @@ function mouseBody(ctx, item) {
     ${tile({ tab: 'dpi', ic: 'dpi', label: t('ov.dpiNow'), value: c.dpis[c.dpiIndex], foot: `<span class="ov-pips">${pips}</span>${t('dpi.levelOf', { n: c.dpiIndex + 1, count: c.dpiCount })}` })}
     ${tile({ tab: 'perf', ic: 'perf', label: t('ov.pollingRate'), value: st.pollingRate ?? RATES[c.rateIdx] ?? '--', unit: 'Hz', foot: t(drv.isCable ? 'ov.fixedCable' : 'ov.viaReceiver') })}
     ${tile({ tab: 'perf', ic: 'moon', label: t('ov.sleep'), value: c.sleep || '∞', unit: c.sleep ? 'min' : '', foot: t(c.sleep ? 'ov.mouseSleeps' : 'ov.neverSleeps') })}
-    ${tile({ tab: 'perf', ic: 'keymap', label: 'Debounce', value: c.debounce, unit: 'ms', foot: t(c.debounce < 4 ? 'ov.debounceLow' : 'ov.debounceOk') })}
-    ${shell('ov-sensor', `<span class="ov-label">Sensor</span>
+    ${tile({ tab: 'perf', ic: 'keymap', label: t('ov.debounce'), value: c.debounce, unit: 'ms', foot: t(c.debounce < 4 ? 'ov.debounceLow' : 'ov.debounceOk') })}
+    ${shell('ov-sensor', `<span class="ov-label">${t('perf.sensor')}</span>
       <div class="ov-flags">
         ${flag(!!(c.sensor & 1), t('perf.angle'))}
         ${flag(!!(c.sensor & 32), 'Motion Sync')}

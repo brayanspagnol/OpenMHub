@@ -44,10 +44,26 @@ const TEXT = {
     lowTitle: 'Bateria fraca', lowBody: '{name} está com {n}% de bateria.', fullTitle: 'Carga completa', fullBody: '{name} está com 100% de bateria.',
     lockOn: '{lock} ativado', lockOff: '{lock} desativado', autostartComment: 'Bateria e configurações dos periféricos MCHOSE',
   },
+  es: {
+    device: 'Dispositivo', disconnected: '{name} — desconectado', asleep: '{name} — en suspensión', charging: ' (cargando)',
+    wired: 'cable', noDevices: 'No hay dispositivos', open: 'Abrir {app}', quit: 'Salir',
+    lowTitle: 'Batería baja', lowBody: '{name} tiene un {n}\u00a0% de batería.', fullTitle: 'Carga completa', fullBody: '{name} tiene un 100\u00a0% de batería.',
+    lockOn: '{lock} activado', lockOff: '{lock} desactivado', autostartComment: 'Batería y configuración de periféricos MCHOSE',
+  },
+  fr: {
+    device: 'Périphérique', disconnected: '{name} — déconnecté', asleep: '{name} — en veille', charging: ' (en charge)',
+    wired: 'câble', noDevices: 'Aucun périphérique', open: 'Ouvrir {app}', quit: 'Quitter',
+    lowTitle: 'Batterie faible', lowBody: 'Batterie de {name}\u202f: {n}\u202f%.', fullTitle: 'Charge complète', fullBody: 'Batterie de {name}\u202f: 100\u202f%.',
+    lockOn: '{lock} activé', lockOff: '{lock} désactivé', autostartComment: 'Batterie et réglages des périphériques MCHOSE',
+  },
 };
 // getLocale() só vale depois do ready; antes (--set-autostart) usa as variáveis do sistema.
 const sysLocale = () => app.getLocale() || process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANG || '';
-const lang = () => prefs.lang || (/^pt/i.test(sysLocale()) ? 'pt-BR' : 'en');
+const lang = () => {
+  if (prefs.lang) return prefs.lang;
+  const sys = sysLocale().toLowerCase();
+  return sys.startsWith('pt') ? 'pt-BR' : sys.startsWith('es') ? 'es' : sys.startsWith('fr') ? 'fr' : 'en';
+};
 function tr(key, vars = {}) {
   const s = (TEXT[lang()] || TEXT.en)[key] ?? TEXT.en[key];
   return s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
@@ -87,7 +103,7 @@ function clean(key, value) {
     const n = Math.round(Number(value));
     return Number.isFinite(n) ? Math.min(90, Math.max(1, n)) : DEFAULTS.lowBattery;
   }
-  if (key === 'lang') return value === 'en' || value === 'pt-BR' ? value : '';
+  if (key === 'lang') return Object.hasOwn(TEXT, value) ? value : '';
   return Boolean(value);
 }
 

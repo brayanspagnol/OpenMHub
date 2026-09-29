@@ -32,26 +32,26 @@ def system_lang():
     return ''
 
 
-PT = system_lang().lower().startswith('pt')
+LANG = system_lang().lower()[:2]
 
 
-def _(pt, en):
-    # Texto no idioma do sistema: português para pt*, inglês para o resto.
-    return pt if PT else en
+def _(pt, en, es=None, fr=None):
+    # Texto no idioma do sistema: pt*, es* e fr* têm tradução; o resto (ou a que faltar) sai em inglês.
+    return {'pt': pt, 'es': es, 'fr': fr}.get(LANG) or en
 
 
 INSTALL_STEPS = [
-    ('electron', _('Verificar o Electron', 'Check Electron')),
-    ('app', _('Copiar o app', 'Copy the app')),
-    ('shortcut', _('Criar o atalho no menu', 'Add the menu shortcut')),
-    ('udev', _('Regra udev (acesso aos dispositivos)', 'udev rule (device access)')),
-    ('done', _('Pronto', 'Done')),
+    ('electron', _('Verificar o Electron', 'Check Electron', 'Comprobar Electron', 'Vérifier Electron')),
+    ('app', _('Copiar o app', 'Copy the app', 'Copiar la aplicación', 'Copier l’application')),
+    ('shortcut', _('Criar o atalho no menu', 'Add the menu shortcut', 'Crear el acceso directo en el menú', 'Ajouter le raccourci au menu')),
+    ('udev', _('Regra udev (acesso aos dispositivos)', 'udev rule (device access)', 'Regla udev (acceso a los dispositivos)', 'Règle udev (accès aux périphériques)')),
+    ('done', _('Pronto', 'Done', 'Listo', 'Terminé')),
 ]
 UNINSTALL_STEPS = [
-    ('stop', _('Fechar o OpenMHub', 'Close OpenMHub')),
-    ('files', _('Remover o app, o atalho e os ícones', 'Remove the app, shortcut and icons')),
-    ('autostart', _('Remover o início automático', 'Remove launch at login')),
-    ('done', _('Pronto', 'Done')),
+    ('stop', _('Fechar o OpenMHub', 'Close OpenMHub', 'Cerrar OpenMHub', 'Fermer OpenMHub')),
+    ('files', _('Remover o app, o atalho e os ícones', 'Remove the app, shortcut and icons', 'Eliminar la aplicación, el acceso directo y los iconos', 'Supprimer l’application, le raccourci et les icônes')),
+    ('autostart', _('Remover o início automático', 'Remove launch at login', 'Quitar el inicio automático', 'Supprimer le lancement au démarrage')),
+    ('done', _('Pronto', 'Done', 'Listo', 'Terminé')),
 ]
 
 CSS = """
@@ -200,7 +200,7 @@ class Installer(Gtk.Application):
 
         self.st = status()
         self.installed = self.st.get('installed') == '1'
-        self.win = Gtk.ApplicationWindow(application=self, title=_('Instalar OpenMHub', 'Install OpenMHub'))
+        self.win = Gtk.ApplicationWindow(application=self, title=_('Instalar OpenMHub', 'Install OpenMHub', 'Instalar OpenMHub', 'Installer OpenMHub'))
         self.win.add_css_class('mhub')
         self.win.set_default_size(480, -1)
         self.win.set_resizable(False)
@@ -224,10 +224,10 @@ class Installer(Gtk.Application):
         titles.append(title)
         version = self.st.get('version', '')
         self.base_subtitle = sub = _(f'Versão {version} · configurador não oficial dos periféricos MCHOSE',
-                                     f'Version {version} · unofficial configurator for MCHOSE peripherals')
+                                     f'Version {version} · unofficial configurator for MCHOSE peripherals', f'Versión {version} · configurador no oficial de periféricos MCHOSE', f'Version {version} · configurateur non officiel des périphériques MCHOSE')
         if self.installed:
             installed = self.st.get('installed_version', '?')
-            sub += _(f'\nJá instalado (versão {installed})', f'\nAlready installed (version {installed})')
+            sub += _(f'\nJá instalado (versão {installed})', f'\nAlready installed (version {installed})', f'\nYa instalado (versión {installed})', f'\nDéjà installé (version {installed})')
         self.subtitle = Gtk.Label(label=sub, xalign=0)
         self.subtitle.add_css_class('subtitle')
         titles.append(self.subtitle)
@@ -239,7 +239,7 @@ class Installer(Gtk.Application):
         self.steps_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         card.append(self.steps_box)
         self.autostart = Gtk.CheckButton(label=_('Iniciar com o sistema (escondido na bandeja)',
-                                                 'Launch at login (hidden in the tray)'))
+                                                 'Launch at login (hidden in the tray)', 'Iniciar con el sistema (oculto en la bandeja)', 'Lancer au démarrage (dans la zone de notification)'))
         self.autostart.set_active(self.st.get('autostart') == '1')
         if '--autostart' in self.args:
             self.autostart.set_active(True)
@@ -253,15 +253,15 @@ class Installer(Gtk.Application):
         self.log = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR)
         self.log.add_css_class('log')
         scroller = Gtk.ScrolledWindow(min_content_height=110, child=self.log)
-        self.expander = Gtk.Expander(label=_('Detalhes', 'Details'), child=scroller)
+        self.expander = Gtk.Expander(label=_('Detalhes', 'Details', 'Detalles', 'Détails'), child=scroller)
         outer.append(self.expander)
 
         buttons = Gtk.Box(spacing=8, halign=Gtk.Align.END)
-        self.secondary = Gtk.Button(label=_('Desinstalar', 'Uninstall') if self.installed else _('Cancelar', 'Cancel'))
+        self.secondary = Gtk.Button(label=_('Desinstalar', 'Uninstall', 'Desinstalar', 'Désinstaller') if self.installed else _('Cancelar', 'Cancel', 'Cancelar', 'Annuler'))
         self.secondary.add_css_class('secondary')
         if self.installed:
             self.secondary.add_css_class('danger')
-        self.primary = Gtk.Button(label=_('Atualizar', 'Update') if self.installed else _('Instalar', 'Install'))
+        self.primary = Gtk.Button(label=_('Atualizar', 'Update', 'Actualizar', 'Mettre à jour') if self.installed else _('Instalar', 'Install', 'Instalar', 'Installer'))
         self.primary.add_css_class('primary')
         buttons.append(self.secondary)
         buttons.append(self.primary)
@@ -319,12 +319,16 @@ class Installer(Gtk.Application):
             self.quit()
 
     def confirm_uninstall(self):
-        dialog = Gtk.AlertDialog(message=_('Desinstalar o OpenMHub?', 'Uninstall OpenMHub?'),
+        dialog = Gtk.AlertDialog(message=_('Desinstalar o OpenMHub?', 'Uninstall OpenMHub?', '¿Desinstalar OpenMHub?', 'Désinstaller OpenMHub ?'),
                                  detail=_('O app, o atalho e o início automático serão removidos. '
                                           'A regra udev e as preferências ficam.',
                                           'The app, its shortcut and launch at login will be removed. '
-                                          'The udev rule and your preferences are kept.'),
-                                 buttons=[_('Cancelar', 'Cancel'), _('Desinstalar', 'Uninstall')],
+                                          'The udev rule and your preferences are kept.',
+                                          'Se eliminarán la aplicación, el acceso directo y el inicio automático. '
+                                          'La regla udev y las preferencias se conservan.',
+                                          'L’application, son raccourci et le lancement au démarrage seront supprimés. '
+                                          'La règle udev et vos préférences sont conservées.'),
+                                 buttons=[_('Cancelar', 'Cancel', 'Cancelar', 'Annuler'), _('Desinstalar', 'Uninstall', 'Desinstalar', 'Désinstaller')],
                                  cancel_button=0, default_button=1)
 
         def done(dlg, res):
@@ -389,29 +393,29 @@ class Installer(Gtk.Application):
             self.phase = 'idle'
             self.failed = True
             self.expander.set_expanded(True)
-            self.primary.set_label(_('Tentar de novo', 'Try again'))
-            self.secondary.set_label(_('Fechar', 'Close'))
+            self.primary.set_label(_('Tentar de novo', 'Try again', 'Reintentar', 'Réessayer'))
+            self.secondary.set_label(_('Fechar', 'Close', 'Cerrar', 'Fermer'))
             self.secondary.remove_css_class('danger')
             self.installed = False
             self.autostart.set_sensitive(True)
         elif self.uninstalling:
             self.phase = 'removed'
             self.subtitle.set_label(self.base_subtitle)
-            self.rows['done'].set_state('ok', _('O OpenMHub foi removido.', 'OpenMHub was removed.'))
-            self.primary.set_label(_('Fechar', 'Close'))
+            self.rows['done'].set_state('ok', _('O OpenMHub foi removido.', 'OpenMHub was removed.', 'OpenMHub se eliminó.', 'OpenMHub a été supprimé.'))
+            self.primary.set_label(_('Fechar', 'Close', 'Cerrar', 'Fermer'))
             self.secondary.set_visible(False)
             self.autostart.set_visible(False)
         else:
             self.phase = 'installed'
             dest = self.st.get('dest', '').replace(os.path.expanduser('~'), '~', 1)
-            self.subtitle.set_label(self.base_subtitle + _(f'\nInstalado em {dest}', f'\nInstalled in {dest}'))
-            detail = _('Abra "OpenMHub" no menu de aplicativos.', 'Open "OpenMHub" from your applications menu.')
+            self.subtitle.set_label(self.base_subtitle + _(f'\nInstalado em {dest}', f'\nInstalled in {dest}', f'\nInstalado en {dest}', f'\nInstallé dans {dest}'))
+            detail = _('Abra "OpenMHub" no menu de aplicativos.', 'Open "OpenMHub" from your applications menu.', 'Abre “OpenMHub” desde el menú de aplicaciones.', 'Ouvrez « OpenMHub » depuis le menu des applications.')
             if self.failed:
-                detail = _('Instalado com avisos: veja os detalhes. ', 'Installed with warnings: see the details. ') + detail
+                detail = _('Instalado com avisos: veja os detalhes. ', 'Installed with warnings: see the details. ', 'Instalado con advertencias: consulta los detalles. ', 'Installé avec des avertissements : voir les détails. ') + detail
                 self.expander.set_expanded(True)
             self.rows['done'].set_state('ok', detail)
-            self.primary.set_label(_('Abrir OpenMHub', 'Open OpenMHub'))
-            self.secondary.set_label(_('Fechar', 'Close'))
+            self.primary.set_label(_('Abrir OpenMHub', 'Open OpenMHub', 'Abrir OpenMHub', 'Ouvrir OpenMHub'))
+            self.secondary.set_label(_('Fechar', 'Close', 'Cerrar', 'Fermer'))
             self.secondary.remove_css_class('danger')
         if self.auto:
             GLib.timeout_add(500, lambda: (self.snapshot_and_quit(0 if ok else 1), False)[1])

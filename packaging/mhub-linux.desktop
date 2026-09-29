@@ -1,15 +1,23 @@
 [Desktop Entry]
 Type=Application
 Name=OpenMHub
+Name[es]=OpenMHub
+Name[fr]=OpenMHub
 GenericName=Peripheral configurator
 GenericName[pt_BR]=Configurador de periféricos
+GenericName[es]=Configurador de periféricos
+GenericName[fr]=Configurateur de périphériques
 Comment=Unofficial configurator for MCHOSE mice and keyboards
 Comment[pt_BR]=Configurador não oficial para mouses e teclados MCHOSE
+Comment[es]=Configurador no oficial para mouses y teclados MCHOSE
+Comment[fr]=Configurateur non officiel pour souris et claviers MCHOSE
 Exec=mhub-linux
 Icon=mhub-linux
 Terminal=false
 Categories=Utility;Settings;HardwareSettings;
 Keywords=OpenMHub;MCHOSE;mouse;keyboard;battery;HID;
 Keywords[pt_BR]=OpenMHub;MCHOSE;mouse;teclado;bateria;HID;
+Keywords[es]=OpenMHub;MCHOSE;mouse;teclado;batería;HID;
+Keywords[fr]=OpenMHub;MCHOSE;souris;clavier;batterie;HID;
 StartupWMClass=mhub-linux
 StartupNotify=true
