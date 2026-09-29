@@ -1,0 +1,5 @@
+# Libera acesso aos dispositivos MCHOSE (hidraw) para o usuário logado.
+# YJX-CHIP (mouses MCHOSE, cabo e receptor 2.4G)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3837", MODE="0660", TAG+="uaccess"
+# SINOWEALTH (dongle 2.4G dos teclados MCHOSE)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="41e4", MODE="0660", TAG+="uaccess"

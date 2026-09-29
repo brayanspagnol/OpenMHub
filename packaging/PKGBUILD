@@ -1,0 +1,35 @@
+# Pacote Arch do M HUB Linux, gerado a partir deste repositório.
+# Uso: cd packaging && makepkg -si   (ou packaging/build-installer.sh, que põe o pacote em dist/)
+
+# Os arquivos vêm do próprio repositório (um nível acima, ou MHUB_ROOT).
+_root="${MHUB_ROOT:-$(cd "$startdir/.." && pwd)}"
+
+pkgname=mhub-linux
+# Versão lida de app/package.json.
+pkgver=$(sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$_root/app/package.json" | head -n1 | tr - _)
+pkgrel=1
+pkgdesc='Unofficial Linux configurator for MCHOSE peripherals, modelled on M HUB'
+arch=('any')
+license=('MIT')
+depends=('electron42')
+source=()
+
+package() {
+  install -d "$pkgdir/usr/lib/mhub-linux"
+  cp -r "$_root/app" "$pkgdir/usr/lib/mhub-linux/app"
+  find "$pkgdir/usr/lib/mhub-linux" -type f -exec chmod 644 {} +
+
+  install -d "$pkgdir/usr/bin"
+  cat > "$pkgdir/usr/bin/mhub-linux" <<'LAUNCHER'
+#!/usr/bin/env bash
+export MHUB_LAUNCHER=/usr/bin/mhub-linux
+exec env -u ELECTRON_RUN_AS_NODE electron42 /usr/lib/mhub-linux/app "$@"
+LAUNCHER
+  chmod 755 "$pkgdir/usr/bin/mhub-linux"
+
+  install -Dm644 "$_root/packaging/mhub-linux.desktop" "$pkgdir/usr/share/applications/mhub-linux.desktop"
+  install -Dm644 "$_root/app/assets/icon-256.png" "$pkgdir/usr/share/icons/hicolor/256x256/apps/mhub-linux.png"
+  install -Dm644 "$_root/app/assets/icon-512.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/mhub-linux.png"
+  install -Dm644 "$_root/app/assets/icon.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/mhub-linux.svg"
+  install -Dm644 "$_root/udev/70-mhub-linux.rules" "$pkgdir/usr/lib/udev/rules.d/70-mhub-linux.rules"
+}

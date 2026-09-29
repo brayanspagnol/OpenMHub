@@ -1,0 +1,138 @@
+/* Abas do teclado (views/keyboard.js). Usa os tokens de styles.css. */
+
+.kb-sleep {
+  display: flex; align-items: center; gap: 8px; margin: 4px 0 18px; padding: 10px 14px; border-radius: 8px;
+  background: rgba(234, 94, 86, .1); color: var(--red); font-size: 14px;
+}
+.kb-sleep svg { font-size: 18px; }
+
+/* ---------- Desenho do teclado ---------- */
+.kbfig {
+  width: 100%; max-width: 1040px; margin: 0 auto; container-type: inline-size; padding: 16px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--border);
+}
+.kbfig-in { position: relative; width: 100%; }
+.kbfig-in > .kbk { position: absolute; }
+.kbk {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2cqw; padding: 0 .3cqw;
+  border-radius: .6cqw; border: 1px solid var(--border); background: var(--btn2); color: var(--text);
+  font-size: max(9px, 1.15cqw); line-height: 1.1; cursor: pointer; overflow: hidden; text-align: center;
+  box-shadow: 0 1px 0 var(--border); transition: border-color .15s, background .15s;
+}
+.kbk .kl { white-space: nowrap; }
+.kbk .ks { font-size: max(8px, .95cqw); color: var(--accent); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.kbk:hover { border-color: var(--accent); }
+.kbk.on { border-color: var(--accent); background: var(--accent-10); color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.kbk.changed { background: var(--accent-10); }
+.kbk.locked { opacity: .55; cursor: not-allowed; }
+.kbk.locked:hover { border-color: var(--border); }
+.kbk.knob { border-radius: 50%; font-size: max(8px, .9cqw); color: var(--text-2); }
+.kbk.ro { cursor: default; }
+.kbk.ro:hover { border-color: var(--border); }
+/* Pintura por tecla: a cor da tecla aparece no fundo. */
+.kbk.lit { background: color-mix(in srgb, var(--kc, #000) 55%, var(--btn2)); color: var(--text); }
+.kbk.lit[style*="--kc:#000000"] { background: var(--btn2); color: var(--text-2); }
+.kbk.painted { box-shadow: 0 0 0 2px var(--kc), 0 0 8px var(--kc); }
+
+/* ---------- Iluminação ---------- */
+.kb-light { display: flex; gap: 30px; padding-top: 8px; align-items: flex-start; }
+.lfx-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px; }
+.lfx {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px 8px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--panel); cursor: pointer; font-size: 14px; color: var(--text);
+}
+.lfx:hover { border-color: var(--accent); }
+.lfx.on { border-color: var(--accent); background: var(--accent-10); color: var(--accent); font-weight: 600; }
+.lfx-name { white-space: nowrap; }
+.lfx-ico { width: 46px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--btn2); }
+.fx-1 { background: var(--accent); }
+.fx-2 { background: radial-gradient(circle, var(--accent) 0, transparent 75%); }
+.fx-3, .fx-16 { background: linear-gradient(90deg, #f33, #fa0, #ee2, #3c5, #2cf, #36f, #c3f); }
+.fx-16 { background: linear-gradient(180deg, #f33, #fa0, #ee2, #3c5, #2cf, #36f); }
+.fx-4 { background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 12px); }
+.fx-5 { background: repeating-linear-gradient(180deg, var(--accent) 0 3px, transparent 3px 9px); }
+.fx-7 { background: repeating-radial-gradient(circle, var(--accent) 0 3px, transparent 3px 7px); }
+.fx-8 { background: radial-gradient(circle at 20% 30%, var(--accent) 0 2px, transparent 3px), radial-gradient(circle at 70% 60%, var(--accent) 0 2px, transparent 3px), radial-gradient(circle at 45% 80%, var(--accent) 0 2px, transparent 3px), var(--btn2); }
+.fx-10 { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+.fx-11 { background: repeating-linear-gradient(135deg, var(--accent) 0 4px, transparent 4px 10px); }
+.fx-12 { background: linear-gradient(90deg, var(--accent), var(--btn2)); }
+.fx-14 { background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 5px); }
+.fx-15 { background: conic-gradient(#f33, #fa0, #ee2, #3c5, #2cf, #36f, #c3f, #f33); border-radius: 50%; width: 28px; }
+.fx-17 { background: radial-gradient(circle, #f6c 0 20%, #fa0 21% 40%, #3c5 41% 60%, transparent 61%); }
+.fx-19 { background: linear-gradient(90deg, #f33 0 25%, #3c5 25% 50%, #36f 50% 75%, #fa0 75%); }
+.fx-0 { background: var(--btn2); position: relative; }
+.fx-0::after { content: ""; position: absolute; left: 50%; top: 3px; bottom: 3px; width: 2px; background: var(--text-2); transform: rotate(45deg); }
+
+.kb-light-side { width: 420px; flex: none; display: grid; gap: 20px; }
+.pcard.dim h3, .pcard.dim p { opacity: .6; }
+.kslider { display: grid; grid-template-columns: 90px 1fr 28px; align-items: center; gap: 14px; margin-top: 22px; font-size: 16px; }
+.kslider .pslider { margin-top: 0; }
+.kslider b { font-weight: 600; text-align: right; }
+.kslider.disabled { opacity: .5; }
+.kslider input:disabled { cursor: not-allowed; }
+.radio:disabled { opacity: .5; cursor: not-allowed; }
+.switch:disabled { opacity: .45; cursor: not-allowed; }
+.swatches { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; }
+.swatches.disabled { opacity: .45; }
+.sw { width: 28px; height: 28px; border-radius: 6px; border: 2px solid var(--card); background: var(--sw); cursor: pointer; box-shadow: 0 0 0 1px var(--border); padding: 0; }
+.sw.on { box-shadow: 0 0 0 2px var(--accent); }
+.sw:disabled { cursor: not-allowed; }
+.sw.off { background: repeating-linear-gradient(45deg, var(--btn2) 0 4px, var(--border) 4px 6px); }
+.sw-pick { position: relative; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; box-shadow: 0 0 0 1px var(--border);
+  background: conic-gradient(#f33, #fa0, #ee2, #3c5, #2cf, #36f, #c3f, #f33); overflow: hidden; }
+.sw-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: 0; padding: 0; }
+.sw-hex { font-size: 14px; color: var(--text-2); font-family: ui-monospace, monospace; margin-left: 4px; }
+.kb-actions { display: flex; align-items: center; gap: 10px; margin-top: 22px; }
+.kb-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.kb-diy { margin-top: 30px; padding: 0 4px 10px; }
+
+/* ---------- Teclas ---------- */
+.kb-map { display: flex; flex-direction: column; gap: 18px; padding-top: 6px; }
+.kb-top { display: flex; align-items: flex-start; gap: 28px; }
+.kb-top .kbfig { flex: 1; }
+.kb-layers { display: flex; flex-direction: column; gap: 12px; width: 160px; flex: none; }
+.kb-layer {
+  height: 42px; border-radius: 6px; border: 1px solid var(--border); background: var(--btn2); cursor: pointer; font-size: 15px;
+}
+.kb-layer:hover { border-color: var(--accent); color: var(--accent); }
+.kb-layer.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.kb-layers .btn-ghost { justify-content: center; padding: 0 8px; }
+.kb-sel { display: flex; align-items: baseline; gap: 14px; min-height: 22px; font-size: 15px; color: var(--text-2); }
+.kb-sel > b { color: var(--accent); font-size: 17px; }
+.kb-sel span b { color: var(--text); }
+.kb-funcs { border-top: 1px solid var(--border); padding-top: 14px; }
+.kb-funcs-head { display: flex; align-items: center; gap: 16px; }
+.kb-cats { display: flex; gap: 26px; }
+.kb-cat { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 0; font-size: 15px; font-weight: 600; cursor: pointer; color: var(--text); }
+.kb-cat.on { color: var(--accent); }
+.kb-funcs .ksearch { width: 280px; }
+.kb-flist { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-top: 16px; }
+.kb-flist.grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.kb-flist.grid .kitem { text-align: center; padding: 8px 4px; }
+.kb-flist.idle .kitem { opacity: .55; cursor: not-allowed; }
+.kb-flist.idle .kitem:hover { border-color: transparent; }
+.kb-flist .kitem { border-color: var(--border); }
+
+/* Macros na aba Teclas: lista larga em grade, com o mesmo visual da lista do mouse. */
+.kb-macros { margin-top: 12px; }
+.kb-macros .mx-list { display: grid; grid-template-columns: 240px 1fr; grid-template-areas: "new tip" "count count" "warn warn" "items items"; align-items: center; column-gap: 18px; }
+.kb-macros .mx-new { grid-area: new; }
+.kb-macros .mx-tip { grid-area: tip; margin: 0; }
+.kb-macros .mx-count { grid-area: count; }
+.kb-macros .mx-warn { grid-area: warn; }
+.kb-macros .mx-items { grid-area: items; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.kb-macros .mx-items .kempty { grid-column: 1 / -1; }
+.kb-macros .mx-item:not(.on):not(:hover) { border-color: var(--border); }
+
+/* ---------- Outros ---------- */
+.kb-others-fig { width: min(560px, 45%); flex: none; pointer-events: none; }
+
+@media (max-width: 1350px) {
+  .kb-light { flex-direction: column; align-items: stretch; }
+  .kb-light-side { width: 100%; }
+  .kb-top { flex-direction: column; }
+  .kb-layers { flex-direction: row; width: auto; }
+  .kb-layers .kb-layer { padding: 0 18px; }
+  .kb-others-fig { width: min(560px, 100%); }
+  .kb-funcs-head { flex-wrap: wrap; }
+}

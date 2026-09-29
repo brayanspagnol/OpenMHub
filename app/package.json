@@ -1,0 +1,11 @@
+{
+  "name": "mhub-linux",
+  "version": "0.1.0",
+  "description": "Configurador para periféricos MCHOSE no Linux, inspirado no M HUB",
+  "main": "main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "env -u ELECTRON_RUN_AS_NODE electron42 ."
+  },
+  "desktopName": "mhub-linux.desktop"
+}

@@ -1,0 +1,17 @@
+# Build output (installers and packages go to GitHub Releases)
+dist/
+*.pkg.tar.*
+pkg/
+src/
+
+# Python
+__pycache__/
+*.pyc
+
+# Local caches and editors
+.cache/
+node_modules/
+.vscode/
+.idea/
+*.swp
+.DS_Store

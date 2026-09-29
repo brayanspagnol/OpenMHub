@@ -1,0 +1,60 @@
+/* Barra de perfis na lateral da página do aparelho (layout do M HUB). */
+.pf { padding: 0 30px 8px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; min-width: 0; }
+.pf-create, .pf-import {
+  font: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  height: 40px; border-radius: 6px; font-size: 15px; white-space: nowrap;
+  transition: background .2s, border-color .2s, color .2s, filter .2s, transform .15s;
+}
+.pf-create svg, .pf-import svg { font-size: 17px; }
+.pf-create { background: var(--accent); color: #fff; border: 0; }
+.pf-create:hover:not(:disabled) { filter: brightness(1.08); }
+.pf-import { background: var(--btn2); border: 1px solid var(--border); color: var(--text); }
+.pf-import:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pf-create:disabled, .pf-import:disabled { opacity: .5; cursor: not-allowed; }
+.pf-create:active:not(:disabled), .pf-import:active:not(:disabled) { transform: scale(.97); }
+
+.pf-title { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 15px; font-weight: 600; }
+.pf-help { display: inline-flex; color: var(--text-2); cursor: help; }
+.pf-help svg { font-size: 16px; }
+.pf-count { color: var(--text-2); font-weight: 400; font-size: 13px; }
+
+.pf-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.pf-item {
+  position: relative; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 14px;
+  border-radius: 6px; background: var(--small-card); border: 1px solid var(--border); cursor: pointer;
+  font-size: 14px; transition: background .2s, border-color .2s, color .2s;
+}
+.pf-item:hover { border-color: var(--accent); }
+.pf-item.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.pf-item.busy { cursor: progress; }
+.pf-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: transparent; }
+.pf-item.on .pf-dot { background: var(--green); box-shadow: 0 0 0 2px rgba(255, 255, 255, .85); }
+.pf-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pf-busy { font-size: 12px; font-weight: 400; opacity: .85; animation: pf-pulse 1s ease-in-out infinite alternate; }
+@keyframes pf-pulse { from { opacity: .45; } to { opacity: 1; } }
+.pf-input {
+  flex: 1; min-width: 0; height: 28px; padding: 0 8px; border-radius: 4px; font: inherit; font-weight: 400;
+  border: 1px solid var(--accent); background: var(--card); color: var(--text); outline: none; user-select: text;
+}
+.pf-more {
+  flex: none; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 4px;
+  background: none; color: inherit; cursor: pointer; opacity: .75;
+}
+.pf-more svg { font-size: 18px; }
+.pf-more:hover { opacity: 1; background: var(--hover); }
+.pf-item.on .pf-more:hover { background: rgba(255, 255, 255, .18); }
+
+.pf-menu {
+  position: absolute; right: 4px; top: calc(100% + 4px); z-index: 20; min-width: 150px; padding: 6px;
+  background: var(--popover); border-radius: 8px; box-shadow: var(--shadow-pop); display: grid; gap: 2px;
+  color: var(--text); font-weight: 400; cursor: default; animation: pf-pop .16s cubic-bezier(.22, 1, .36, 1);
+}
+@keyframes pf-pop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.pf-menu button {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border: 0; border-radius: 5px;
+  background: none; font: inherit; font-size: 14px; color: inherit; cursor: pointer; text-align: left;
+}
+.pf-menu button svg { font-size: 16px; }
+.pf-menu button:hover { background: var(--hover); color: var(--accent); }
+.pf-menu button.danger:hover { color: var(--red); }
+@media (prefers-reduced-motion: reduce) { .pf-menu, .pf-busy { animation: none; } }
