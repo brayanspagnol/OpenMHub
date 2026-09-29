@@ -27,7 +27,32 @@ if (SHOT) app.setPath('userData', path.join(os.tmpdir(), 'mhub-linux-shot'));
 const VENDORS = new Set([0x3837, 0x41e4]);
 const ASSETS = path.join(__dirname, 'assets');
 const ICON = path.join(ASSETS, 'icon-256.png');
-const MODES = { wired: 'cabo', '2.4g': '2.4G', bt: 'Bluetooth' };
+
+// ---------- Idioma ----------
+// Textos do processo principal (bandeja, notificações, início automático). O idioma vem da
+// interface (prefs.lang, gravado por window.mhub.setLang); antes disso, do idioma do sistema.
+const TEXT = {
+  en: {
+    device: 'Device', disconnected: '{name} — disconnected', asleep: '{name} — asleep', charging: ' (charging)',
+    wired: 'cable', noDevices: 'No devices', open: 'Open {app}', quit: 'Quit',
+    lowTitle: 'Low battery', lowBody: '{name} is at {n}% battery.', fullTitle: 'Fully charged', fullBody: '{name} is at 100% battery.',
+    lockOn: '{lock} on', lockOff: '{lock} off', autostartComment: 'Battery and settings for MCHOSE peripherals',
+  },
+  'pt-BR': {
+    device: 'Dispositivo', disconnected: '{name} — desconectado', asleep: '{name} — em repouso', charging: ' (carregando)',
+    wired: 'cabo', noDevices: 'Nenhum dispositivo', open: 'Abrir {app}', quit: 'Sair',
+    lowTitle: 'Bateria fraca', lowBody: '{name} está com {n}% de bateria.', fullTitle: 'Carga completa', fullBody: '{name} está com 100% de bateria.',
+    lockOn: '{lock} ativado', lockOff: '{lock} desativado', autostartComment: 'Bateria e configurações dos periféricos MCHOSE',
+  },
+};
+// getLocale() só vale depois do ready; antes (--set-autostart) usa as variáveis do sistema.
+const sysLocale = () => app.getLocale() || process.env.LC_ALL || process.env.LC_MESSAGES || process.env.LANG || '';
+const lang = () => prefs.lang || (/^pt/i.test(sysLocale()) ? 'pt-BR' : 'en');
+function tr(key, vars = {}) {
+  const s = (TEXT[lang()] || TEXT.en)[key] ?? TEXT.en[key];
+  return s.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
+}
+const MODES = { wired: () => tr('wired'), '2.4g': () => '2.4G', bt: () => 'Bluetooth' };
 
 let win = null;
 let tray = null;
@@ -40,6 +65,7 @@ const alerts = new Map(); // id -> { low, full }: já notificou neste ciclo
 // ---------- Preferências ----------
 const DEFAULTS = {
   closeToTray: true, autostart: false, lowBattery: 20, notifyFull: false, lockNotify: true, dpiNotify: true,
+  lang: '', // '' = ainda não escolhido pela interface (usa o idioma do sistema)
 };
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
 let prefs = { ...DEFAULTS };
@@ -61,6 +87,7 @@ function clean(key, value) {
     const n = Math.round(Number(value));
     return Number.isFinite(n) ? Math.min(90, Math.max(1, n)) : DEFAULTS.lowBattery;
   }
+  if (key === 'lang') return value === 'en' || value === 'pt-BR' ? value : '';
   return Boolean(value);
 }
 
@@ -129,7 +156,7 @@ function applyAutostart() {
     '[Desktop Entry]',
     'Type=Application',
     `Name=${NAME}`,
-    'Comment=Bateria e configurações dos periféricos MCHOSE',
+    `Comment=${tr('autostartComment')}`,
     `Exec=${exec}`,
     'Icon=mhub-linux',
     'Terminal=false',
@@ -260,27 +287,27 @@ function createTray() {
 }
 
 function deviceLine(d) {
-  const name = d.name || d.id || 'Dispositivo';
-  if (d.online === false) return `${name} — desconectado`;
-  if (d.sleeping) return `${name} — em repouso`;
+  const name = d.name || d.id || tr('device');
+  if (d.online === false) return tr('disconnected', { name });
+  if (d.sleeping) return tr('asleep', { name });
   let s = `${name} — ${typeof d.battery === 'number' ? `${d.battery}%` : '—'}`;
-  if (d.charging) s += ' (carregando)';
-  if (MODES[d.mode]) s += ` · ${MODES[d.mode]}`;
+  if (d.charging) s += tr('charging');
+  if (MODES[d.mode]) s += ` · ${MODES[d.mode]()}`;
   return s;
 }
 
 function updateTray() {
   if (!tray) return;
   const lines = devices.map(deviceLine);
-  tray.setToolTip([NAME, ...(lines.length ? lines : ['Nenhum dispositivo'])].join('\n'));
+  tray.setToolTip([NAME, ...(lines.length ? lines : [tr('noDevices')])].join('\n'));
   const items = lines.length
     ? lines.map((label) => ({ label, enabled: false }))
-    : [{ label: 'Nenhum dispositivo', enabled: false }];
+    : [{ label: tr('noDevices'), enabled: false }];
   tray.setContextMenu(Menu.buildFromTemplate([
     ...items,
     { type: 'separator' },
-    { label: `Abrir ${NAME}`, click: showWindow },
-    { label: 'Sair', click: () => { quitting = true; app.quit(); } },
+    { label: tr('open', { app: NAME }), click: showWindow },
+    { label: tr('quit'), click: () => { quitting = true; app.quit(); } },
   ]));
 }
 
@@ -312,18 +339,18 @@ function notify(title, body, opts = {}) {
 function checkBattery(d) {
   if (typeof d.battery !== 'number' || d.online === false || d.sleeping) return;
   const st = alerts.get(d.id) || { low: false, full: false };
-  const name = d.name || 'Dispositivo';
+  const name = d.name || tr('device');
   // Bateria fraca: uma vez por ciclo de descarga.
   if (d.charging || d.battery > prefs.lowBattery + 5) st.low = false;
   else if (!st.low && d.battery <= prefs.lowBattery) {
     st.low = true;
-    notify('Bateria fraca', `${name} está com ${d.battery}% de bateria.`);
+    notify(tr('lowTitle'), tr('lowBody', { name, n: d.battery }));
   }
   // Carga completa (opcional).
   if (!d.charging || d.battery < 95) st.full = false;
   else if (!st.full && d.battery >= 100) {
     st.full = true;
-    if (prefs.notifyFull) notify('Carga completa', `${name} está com 100% de bateria.`);
+    if (prefs.notifyFull) notify(tr('fullTitle'), tr('fullBody', { name }));
   }
   alerts.set(d.id, st);
 }
@@ -390,7 +417,7 @@ function pollLocks() {
     for (const lock of Object.keys(LOCKS)) {
       if (st[lock] === lockState[lock]) continue;
       if (prefs.lockNotify) {
-        notify(`${LOCKS[lock]} ${st[lock] ? 'ativado' : 'desativado'}`, '', { tag: 'lock' });
+        notify(tr(st[lock] ? 'lockOn' : 'lockOff', { lock: LOCKS[lock] }), '', { tag: 'lock' });
       }
     }
   }
@@ -419,6 +446,7 @@ ipcMain.handle('prefs:set', (_e, key, value) => {
   savePrefs();
   if (key === 'autostart') applyAutostart();
   if (key === 'lowBattery') alerts.forEach((st) => { st.low = false; });
+  if (key === 'lang') updateTray();
 });
 ipcMain.handle('version', () => app.getVersion());
 // Diferenças do Flatpak na interface: sem início automático e regra udev instalada à mão.

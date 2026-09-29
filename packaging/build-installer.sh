@@ -38,7 +38,8 @@ tmp=\$(mktemp -d "\${TMPDIR:-/tmp}/mhub-installer.XXXXXX") || exit 1
 trap 'rm -rf "\$tmp"' EXIT
 trap 'exit 130' INT TERM
 line=\$(awk '/^__MHUB_PAYLOAD__\$/ { print NR + 1; exit }' "\$0")
-tail -n +"\$line" "\$0" | tar -xz -C "\$tmp" || { echo "Arquivo do instalador corrompido." >&2; exit 1; }
+case "\${LANGUAGE:-\${LC_ALL:-\${LC_MESSAGES:-\${LANG:-}}}}" in pt*) bad="Arquivo do instalador corrompido." ;; *) bad="The installer file is corrupted." ;; esac
+tail -n +"\$line" "\$0" | tar -xz -C "\$tmp" || { echo "\$bad" >&2; exit 1; }
 [ \$# -eq 0 ] && set -- --gui
 bash "\$tmp/install.sh" "\$@"
 exit \$?

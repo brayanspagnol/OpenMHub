@@ -50,23 +50,23 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/home.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/home.png</image>
       <caption>Connected devices with their battery and connection mode</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-overview.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-overview.png</image>
       <caption>Device overview</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-dpi.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-dpi.png</image>
       <caption>Mouse DPI stages</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-performance.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-performance.png</image>
       <caption>Polling rate, debounce and other mouse settings</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/keyboard-keymap.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/keyboard-keymap.png</image>
       <caption>Keyboard key remapping</caption>
     </screenshot>
   </screenshots>
@@ -99,6 +99,11 @@
   </keywords>
 
   <releases>
+    <release version="0.3.0" date="2026-09-29">
+      <description>
+        <p>Complete English interface, with a language setting.</p>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-09-29">
       <description>
         <p>Renamed to OpenMHub and packaged for Flatpak.</p>

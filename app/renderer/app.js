@@ -5,6 +5,7 @@ import { mousePane, bindMousePane } from './views/mouse.js';
 import { profilesSidebar, bindProfilesSidebar } from './views/profiles.js';
 import { overviewPane, bindOverview } from './views/overview.js';
 import { testerPage, bindTester, TESTER_ICON } from './views/tester.js';
+import { t, lang, langPref, resolveLang } from './i18n.js';
 
 // Módulos opcionais: se ainda não existirem, o app segue com as ilustrações e sem as abas do teclado.
 const optional = (path) => import(path).catch((err) => { console.warn('módulo opcional', path, err.message); return {}; });
@@ -40,8 +41,12 @@ function applyTheme() {
 }
 $('#btn-refresh').innerHTML = icon('refresh');
 $('#btn-settings').innerHTML = icon('gear');
+$('#btn-refresh').title = t('tb.refresh');
+$('#btn-theme').title = t('tb.theme');
+$('#btn-settings').title = t('settings');
 for (const b of document.querySelectorAll('[data-win]')) {
   b.innerHTML = icon(b.dataset.win);
+  b.title = t('tb.' + b.dataset.win);
   b.onclick = () => window.mhub?.win(b.dataset.win);
 }
 // Troca de tema com círculo que se expande a partir do botão.
@@ -138,7 +143,7 @@ function schedule() { clearInterval(timer); timer = setInterval(pollAll, state.p
 // Eventos espontâneos dos aparelhos (ex.: botão de DPI do mouse).
 function onDeviceEvent(drv, ev) {
   if (ev.type === 'dpi') {
-    try { window.mhub?.notify?.(`DPI ${ev.value}`, `Nível ${ev.index + 1} de ${ev.count} · ${drv.name}`, { tag: 'dpi' }); } catch { /* sem processo principal */ }
+    try { window.mhub?.notify?.(`DPI ${ev.value}`, t('notify.dpi', { n: ev.index + 1, count: ev.count, name: drv.name }), { tag: 'dpi' }); } catch { /* sem processo principal */ }
     render();
   }
 }
@@ -160,7 +165,7 @@ function logicalDevices() {
   for (const [k, drv] of state.drivers) {
     const st = state.status.get(k) || {};
     const best = byId.get(drv.identity || k);
-    if (st.cableOnly && best && best.key !== k) best.st = { ...best.st, via: `${best.st.via} · cabo só carregando` };
+    if (st.cableOnly && best && best.key !== k) best.st = { ...best.st, via: `${best.st.via} · ${t('via.cableOnly')}` };
   }
   return [...byId.values()].sort((a, b) => (a.drv.kind === 'mouse' ? 0 : 1) - (b.drv.kind === 'mouse' ? 0 : 1));
 }
@@ -168,15 +173,15 @@ function logicalDevices() {
 function statusRow(st) {
   const parts = [];
   if (st.online === false) {
-    parts.push(`<span class="st muted">${icon('offline')}Desconectado</span>`);
+    parts.push(`<span class="st muted">${icon('offline')}${t('st.disconnected')}</span>`);
   } else if (st.charging) {
     const full = st.battery >= 100;
-    parts.push(`<span class="st charging ${full ? 'full' : ''}">${batteryIcon(st.battery, !full)}${full ? 'Carregado' : 'Carregando'}${st.battery != null ? ` · ${st.battery}%` : ''}</span>`);
+    parts.push(`<span class="st charging ${full ? 'full' : ''}">${batteryIcon(st.battery, !full)}${t(full ? 'st.charged' : 'st.charging')}${st.battery != null ? ` · ${st.battery}%` : ''}</span>`);
   } else if (st.battery != null) {
     const low = st.battery < 20;
     parts.push(`<span class="st ${low ? 'low' : ''}">${batteryIcon(st.battery, false)}${st.battery}%</span>`);
   }
-  const modes = { wired: ['wired', 'Com fio'], '2.4g': ['wifi', '2.4G'], bt: ['bluetooth', 'Bluetooth'] };
+  const modes = { wired: ['wired', t('mode.wired')], '2.4g': ['wifi', '2.4G'], bt: ['bluetooth', 'Bluetooth'] };
   if (st.mode && modes[st.mode] && st.online !== false) parts.push(`<span class="st">${icon(modes[st.mode][0])}${modes[st.mode][1]}</span>`);
   return parts.join('');
 }
@@ -212,10 +217,10 @@ function renderTitle() {
   const tb = $('#titlebar');
   if (state.view === 'home') {
     tb.classList.remove('bordered');
-    left.innerHTML = `<div class="wordmark"><img class="logo" src="../assets/icon.svg" alt="">OpenMHub<small>Não oficial · para aparelhos MCHOSE</small></div>`;
+    left.innerHTML = `<div class="wordmark"><img class="logo" src="../assets/icon.svg" alt="">OpenMHub<small>${t('title.tagline')}</small></div>`;
   } else {
     tb.classList.add('bordered');
-    left.innerHTML = `<button class="back-btn" id="back">${icon('home')}Voltar ao início</button>`;
+    left.innerHTML = `<button class="back-btn" id="back">${icon('home')}${t('title.back')}</button>`;
     $('#back').onclick = () => go('home');
   }
 }
@@ -230,15 +235,15 @@ function renderHome() {
   let cards;
   if (!devs.length && !state.scanned) {
     // Primeira busca ainda em andamento: nada de "não encontrado" piscando na abertura.
-    cards = `<div class="empty searching"><div class="spinner"></div><h3>Procurando seus aparelhos…</h3></div>`;
+    cards = `<div class="empty searching"><div class="spinner"></div><h3>${t('home.searching')}</h3></div>`;
   } else if (!devs.length) {
     cards = `<div class="empty"><div class="empty-ico">${icon('devices')}</div>
-      <h3>Nenhum aparelho conectado ainda</h3>
-      <p>Ligue seu mouse ou teclado MCHOSE, pelo cabo ou pelo receptor sem fio. Ele aparece aqui sozinho, sem precisar reabrir o app.</p>
-      <details ${state.flatpak ? 'open' : ''}><summary>Já está ligado e não aparece?</summary>
-        ${state.flatpak ? `<p>No Flatpak, o acesso aos aparelhos precisa de uma regra do udev, instalada uma vez só. Rode este comando num terminal (ele pede sua senha), depois tire e conecte de novo o receptor ou o cabo:</p>
-        <div class="cmd"><code id="udev-cmd">${esc(UDEV_CMD)}</code><button class="btn-white" id="copy-udev">Copiar</button></div>`
-    : '<p>Tire o receptor ou o cabo e conecte de novo. Se continuar sem aparecer, rode o instalador do OpenMHub mais uma vez: ele libera o acesso do app aos aparelhos.</p>'}</details>
+      <h3>${t('home.empty')}</h3>
+      <p>${t('home.emptyBody')}</p>
+      <details ${state.flatpak ? 'open' : ''}><summary>${t('home.notShowing')}</summary>
+        ${state.flatpak ? `<p>${t('home.flatpakHelp')}</p>
+        <div class="cmd"><code id="udev-cmd">${esc(UDEV_CMD)}</code><button class="btn-white" id="copy-udev">${t('common.copy')}</button></div>`
+    : `<p>${t('home.nativeHelp')}</p>`}</details>
     </div>`;
   } else {
     cards = `<div class="cards ${state.homeView === 'list' ? 'list' : ''}">${devs.map(({ id, drv, st }) => `
@@ -249,7 +254,7 @@ function renderHome() {
           <h2>${esc(st.name || drv.name)}</h2>
           <div class="status-row">${statusRow(st)}</div>
         </div>
-        ${st.sleeping ? '<div class="sleep-banner">Aparelho em repouso. Mexa nele para acordar.</div>' : ''}
+        ${st.sleeping ? `<div class="sleep-banner">${t('home.sleeping')}</div>` : ''}
       </div>`).join('')}</div>`;
   }
   // Barra como no M HUB atual: grupo de botões à esquerda, visualização grade/lista à direita.
@@ -257,23 +262,23 @@ function renderHome() {
   return `<div class="home">
     <div class="home-bar">
       <div class="hb-group">
-        <button id="seg-settings">${icon('settings2')}Configurações</button>
-        <button id="seg-tester">${TESTER_ICON}Testes</button>
+        <button id="seg-settings">${icon('settings2')}${t('settings')}</button>
+        <button id="seg-tester">${TESTER_ICON}${t('home.tests')}</button>
       </div>
       <span class="spacer"></span>
       <div class="hb-group hb-view">
-        <button class="${list ? '' : 'on'}" data-home-view="grid" title="Grade">${icon('grid')}</button>
-        <button class="${list ? 'on' : ''}" data-home-view="list" title="Lista">${icon('list')}</button>
+        <button class="${list ? '' : 'on'}" data-home-view="grid" title="${t('home.grid')}">${icon('grid')}</button>
+        <button class="${list ? 'on' : ''}" data-home-view="list" title="${t('home.list')}">${icon('list')}</button>
       </div>
     </div>
     ${cards}
-    <p class="home-note">Nenhum aparelho funciona com o app pelo Bluetooth: use o cabo ou o receptor 2.4G.</p>
+    <p class="home-note">${t('home.note')}</p>
   </div>`;
 }
 
 const TABS = {
-  mouse: [['overview', 'info', 'Visão geral'], ['keymap', 'keymap', 'Botões'], ['dpi', 'dpi', 'DPI'], ['perf', 'perf', 'Desempenho'], ['others', 'others', 'Outros']],
-  keyboard: [['overview', 'info', 'Visão geral'], ['light', 'light', 'Iluminação'], ['keymap', 'keymap', 'Teclas'], ['perf', 'perf', 'Desempenho'], ['others', 'others', 'Outros']],
+  mouse: [['overview', 'info', t('tab.overview')], ['keymap', 'keymap', t('tab.buttons')], ['dpi', 'dpi', 'DPI'], ['perf', 'perf', t('tab.perf')], ['others', 'others', t('tab.others')]],
+  keyboard: [['overview', 'info', t('tab.overview')], ['light', 'light', t('tab.light')], ['keymap', 'keymap', t('tab.keys')], ['perf', 'perf', t('tab.perf')], ['others', 'others', t('tab.others')]],
 };
 
 function renderDevice() {
@@ -281,25 +286,25 @@ function renderDevice() {
   if (!item) { state.view = 'home'; return renderHome(); }
   const { drv, st } = item;
   const tabs = TABS[drv.kind] || TABS.mouse;
-  const modeName = { wired: 'Com fio (USB)', '2.4g': 'Sem fio 2.4G', bt: 'Bluetooth' }[st.mode] || 'Desconhecido';
+  const modeName = { wired: t('mode.wiredUsb'), '2.4g': t('mode.24g'), bt: 'Bluetooth' }[st.mode] || t('common.unknown');
   let pane;
   if (state.tab === 'overview') {
     pane = overviewPane(ctxFor(item), item)
-      + (state.debug ? `<div class="scard" style="margin-top:16px"><h3>Depuração</h3><p>Últimas respostas HID.</p><div class="raw">${esc(JSON.stringify(st.raw || {}, null, 1))}</div></div>` : '');
+      + (state.debug ? `<div class="scard" style="margin-top:16px"><h3>${t('dev.debug')}</h3><p>${t('dev.debugHint')}</p><div class="raw">${esc(JSON.stringify(st.raw || {}, null, 1))}</div></div>` : '');
   } else if (drv.kind === 'mouse' && st.canWrite) {
     pane = mousePane(state.tab, ctxFor(item));
   } else if (drv.kind === 'keyboard' && kbView.keyboardPane) {
     pane = kbView.keyboardPane(state.tab, ctxFor(item));
   } else {
-    pane = `<div class="soon">Esta seção chega nas próximas versões.</div>`;
+    pane = `<div class="soon">${t('dev.soon')}</div>`;
   }
   return { pane, shell: (paneHtml) => `<div class="dpage" data-key="${esc(item.id)}|${state.tab}">
     <aside class="side">
       <div class="side-head"><span class="dot ${st.online === false ? 'off' : ''}"></span><h1>${esc(st.name || drv.name)}</h1><span class="badge">Linux</span></div>
       ${profilesSidebar(ctxFor(item))}
       <div class="side-info" data-part="side">
-        <span>Modo: <b>${modeName}</b></span>
-        ${st.battery != null ? `<span>Bateria: <b>${st.battery}%${st.charging ? ' (carregando)' : ''}</b></span>` : ''}
+        <span>${t('dev.mode')} <b>${modeName}</b></span>
+        ${st.battery != null ? `<span>${t('dev.battery')} <b>${st.battery}%${st.charging ? t('dev.chargingParen') : ''}</b></span>` : ''}
       </div>
     </aside>
     <section class="content">
@@ -314,7 +319,7 @@ function renderDevice() {
   </div>` };
 }
 
-const SET_TABS = [['general', 'gear', 'Geral'], ['notify', 'info', 'Notificações'], ['tools', 'perf', 'Ferramentas'], ['about', 'devices', 'Sobre']];
+const SET_TABS = [['general', 'gear', t('set.general')], ['notify', 'info', t('set.notify')], ['tools', 'perf', t('set.tools')], ['about', 'devices', t('set.about')]];
 const card = (title, desc, control) => `<div class="toggle-card"><div><b>${title}</b><span>${desc}</span></div>${control}</div>`;
 const prefSwitch = (k) => `<button class="switch ${state.prefs?.[k] ? 'on' : ''}" data-pref="${k}"></button>`;
 
@@ -324,30 +329,34 @@ function renderSettings() {
   const p = state.prefs;
   let body;
   if (tab === 'notify') {
-    body = `<h2>Notificações</h2>
-      ${p ? card('Aviso de bateria fraca', 'Notificação quando um aparelho fora do carregador chega a este nível.',
+    body = `<h2>${t('set.notify')}</h2>
+      ${p ? card(t('set.lowBattery'), t('set.lowBatteryDesc'),
         `<select class="sel" data-pref="lowBattery">${[10, 15, 20, 25, 30].map((v) => `<option value="${v}" ${v === p.lowBattery ? 'selected' : ''}>${v}%</option>`).join('')}</select>`)
-      + card('Aviso de carga completa', 'Notificação quando um aparelho carregando chega a 100%.', prefSwitch('notifyFull'))
-      + ('dpiNotify' in p ? card('Aviso de troca de DPI', 'Mostra o novo DPI quando você aperta o botão de DPI do mouse.', prefSwitch('dpiNotify')) : '')
-      + ('lockNotify' in p ? card('Aviso de Caps Lock e Num Lock', 'Mostra na tela quando Caps Lock, Num Lock ou Scroll Lock liga ou desliga.', prefSwitch('lockNotify')) : '')
-      : '<p class="soon">Disponível no app instalado.</p>'}`;
+      + card(t('set.full'), t('set.fullDesc'), prefSwitch('notifyFull'))
+      + ('dpiNotify' in p ? card(t('set.dpi'), t('set.dpiDesc'), prefSwitch('dpiNotify')) : '')
+      + ('lockNotify' in p ? card(t('set.lock'), t('set.lockDesc'), prefSwitch('lockNotify')) : '')
+      : `<p class="soon">${t('set.installedOnly')}</p>`}`;
   } else if (tab === 'tools') {
-    body = `<h2>Ferramentas</h2>
-      ${card('Teste de mouse e teclado', 'Veja se cada tecla e botão responde, rollover, duplo clique anormal e taxa de polling.', '<button class="btn-white" id="set-tester">Abrir teste</button>')}
-      ${card('Modo de depuração', 'Mostra as respostas HID brutas na página do aparelho.', `<button class="switch ${state.debug ? 'on' : ''}" id="set-debug"></button>`)}`;
+    body = `<h2>${t('set.tools')}</h2>
+      ${card(t('set.tester'), t('set.testerDesc'), `<button class="btn-white" id="set-tester">${t('set.openTester')}</button>`)}
+      ${card(t('set.debug'), t('set.debugDesc'), `<button class="switch ${state.debug ? 'on' : ''}" id="set-debug"></button>`)}`;
   } else if (tab === 'about') {
-    body = `<h2>Sobre</h2>
+    body = `<h2>${t('set.about')}</h2>
       <div class="toggle-card about-card"><img src="../assets/icon.svg" alt="">
-        <div><b>OpenMHub <span id="app-version"></span></b><span>Configurador de código aberto para mouses e teclados MCHOSE no Linux.</span></div></div>
-      ${card('Projeto não oficial', 'Não é afiliado, patrocinado nem aprovado pela MCHOSE. MCHOSE e M HUB são marcas dos seus donos. As fotos dos aparelhos são baixadas do site da MCHOSE na primeira vez e ficam guardadas no computador.', '')}
-      ${card('Atualização de firmware', 'Não é feita por este app, para não arriscar o aparelho. Use o M HUB oficial no Windows.', '')}`;
+        <div><b>OpenMHub <span id="app-version"></span></b><span>${t('set.aboutDesc')}</span></div></div>
+      ${card(t('set.unofficial'), t('set.unofficialDesc'), '')}
+      ${card(t('set.firmware'), t('set.firmwareDesc'), '')}`;
   } else {
-    body = `<h2>Configurações gerais</h2>
-      ${card('Tema escuro', 'Usa as cores do modo escuro do M HUB.', `<button class="switch ${state.theme === 'dark' ? 'on' : ''}" id="set-dark"></button>`)}
-      ${card('Intervalo de atualização', 'Com que frequência a bateria e a conexão são lidas.',
+    const pref = langPref();
+    const langs = [['auto', t('set.langAuto')], ['en', 'English'], ['pt-BR', 'Português (Brasil)']];
+    body = `<h2>${t('set.generalTitle')}</h2>
+      ${card(t('set.lang'), t('set.langDesc'),
+        `<select class="sel" id="set-lang">${langs.map(([v, label]) => `<option value="${v}" ${v === pref ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}
+      ${card(t('set.dark'), t('set.darkDesc'), `<button class="switch ${state.theme === 'dark' ? 'on' : ''}" id="set-dark"></button>`)}
+      ${card(t('set.poll'), t('set.pollDesc'),
         `<select class="sel" id="set-poll">${[1000, 3000, 5000, 10000].map((v) => `<option value="${v}" ${v === state.pollMs ? 'selected' : ''}>${v / 1000} s</option>`).join('')}</select>`)}
-      ${p ? card('Fechar para a bandeja', 'O botão fechar esconde a janela; o app segue avisando sobre a bateria.', prefSwitch('closeToTray'))
-        + (state.flatpak ? '' : card('Iniciar com o sistema', 'Abre minimizado na bandeja ao entrar na sessão.', prefSwitch('autostart'))) : ''}`;
+      ${p ? card(t('set.tray'), t('set.trayDesc'), prefSwitch('closeToTray'))
+        + (state.flatpak ? '' : card(t('set.autostart'), t('set.autostartDesc'), prefSwitch('autostart'))) : ''}`;
   }
   return `<div class="settings-page">
     <nav class="set-nav">${SET_TABS.map(([id, ic, label]) => `<button class="${id === tab ? 'on' : ''}" data-set-tab="${id}">${icon(ic)}${label}</button>`).join('')}</nav>
@@ -378,16 +387,16 @@ function ctxFor(item) {
       toast(okMsg);
     } catch (err) {
       console.warn(err);
-      toast('Não foi possível gravar: ' + (err.message || err), true);
+      toast(t('common.saveFailed', { err: err.message || err }), true);
     }
     render(true);
   };
   return {
     drv, st, ui: uiFor(id), id, color: colorOf(id),
     image: (view) => images.deviceImage?.(st.name || drv.name, view, colorOf(id), imgOpts(drv)) || null,
-    run: (fn, okMsg = 'Salvo') => run(fn, okMsg),
-    write: (patch) => run(() => drv.writeConfig(patch), 'Salvo no mouse'),
-    writeKeys: (keys) => run(() => drv.writeKeys(keys), 'Botões salvos no mouse'),
+    run: (fn, okMsg = t('common.saved')) => run(fn, okMsg),
+    write: (patch) => run(() => drv.writeConfig(patch), t('mouse.saved')),
+    writeKeys: (keys) => run(() => drv.writeKeys(keys), t('mouse.keysSaved')),
     rerender: () => render(true),
     confirm,
   };
@@ -408,7 +417,7 @@ function confirm(title, body) {
     const m = document.createElement('div');
     m.className = 'modal';
     m.innerHTML = `<div class="dialog"><h3>${esc(title)}</h3><p>${esc(body)}</p>
-      <div class="dialog-actions"><button class="btn-white" data-r="0">Cancelar</button><button class="btn-primary" data-r="1">Confirmar</button></div></div>`;
+      <div class="dialog-actions"><button class="btn-white" data-r="0">${t('common.cancel')}</button><button class="btn-primary" data-r="1">${t('common.confirm')}</button></div></div>`;
     const done = (v) => { m.remove(); resolve(v); };
     m.addEventListener('click', (e) => { if (e.target === m) done(false); const r = e.target.closest('[data-r]'); if (r) done(r.dataset.r === '1'); });
     document.body.append(m);
@@ -524,7 +533,7 @@ function render(force = false) {
   for (const b of document.querySelectorAll('[data-home-view]')) b.onclick = () => { state.homeView = b.dataset.homeView; store.set('homeView', state.homeView); lastHtml = ''; render(true); };
   const ts = $('#set-tester'); if (ts) ts.onclick = () => go('tester');
   const cu = $('#copy-udev');
-  if (cu) cu.onclick = () => navigator.clipboard.writeText(UDEV_CMD).then(() => toast('Comando copiado'), () => toast('Não foi possível copiar', true));
+  if (cu) cu.onclick = () => navigator.clipboard.writeText(UDEV_CMD).then(() => toast(t('common.copied')), () => toast(t('common.copyFailed'), true));
   bindSettings();
   if (screenChanged) animateIn(view.firstElementChild, state.view === 'home' ? 'anim-home' : 'anim-page');
   lastViewKey = viewKey;
@@ -578,9 +587,16 @@ function bindSettings() {
   const dk = $('#set-dark'); if (dk) dk.onclick = () => { $('#btn-theme').click(); render(true); };
   const db = $('#set-debug'); if (db) db.onclick = () => { state.debug = !state.debug; store.set('debug', state.debug); render(true); };
   const sp = $('#set-poll'); if (sp) sp.onchange = () => { state.pollMs = +sp.value; store.set('pollMs', state.pollMs); schedule(); };
+  // Idioma: grava, avisa o processo principal (bandeja e notificações) e recarrega a interface.
+  const sl = $('#set-lang');
+  if (sl) sl.onchange = async () => {
+    store.set('lang', sl.value);
+    try { await window.mhub?.setLang?.(resolveLang(sl.value)); } catch { /* sem processo principal */ }
+    location.reload();
+  };
   const setPref = async (k, v) => {
     state.prefs = { ...state.prefs, [k]: v };
-    try { await window.mhub?.setPref?.(k, v); } catch (e) { toast('Não foi possível salvar: ' + e.message, true); }
+    try { await window.mhub?.setPref?.(k, v); } catch (e) { toast(t('common.prefFailed', { err: e.message }), true); }
     render(true);
   };
   for (const b of document.querySelectorAll('[data-pref]')) {
@@ -591,6 +607,7 @@ function bindSettings() {
 }
 
 applyTheme();
+window.mhub?.setLang?.(lang)?.catch?.(() => {});
 render(true);
 window.mhub?.getPrefs?.().then((p) => { state.prefs = p; if (state.view === 'settings') render(true); }).catch(() => {});
 window.mhub?.env?.().then((e) => { state.flatpak = !!e?.flatpak; render(true); }).catch(() => {});

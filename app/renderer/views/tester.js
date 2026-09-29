@@ -1,6 +1,7 @@
 // Ferramenta de teste de mouse e teclado (equivalente ao "Mouse & Keyboard Test Tool" do M HUB).
 // testerPage() devolve o HTML; bindTester(root) liga os eventos e devolve a função de limpeza.
 import { LAYOUT, LAYOUT_W, LAYOUT_H } from '../data/keyboard-ut98.js';
+import { t } from '../i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const store = {
@@ -42,19 +43,18 @@ for (const c of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') CODE2K['Key' + c] = c;
 });
 
 // Teclas que não existem no UT98 mas aparecem em outros teclados.
-const EXTRAS = [['Insert', 'Ins'], ['PrintScreen', 'PrtSc'], ['ScrollLock', 'ScrLk'], ['Pause', 'Pause'], ['ContextMenu', 'Menu'], ['MetaRight', 'Win dir.']];
+const EXTRAS = [['Insert', 'Ins'], ['PrintScreen', 'PrtSc'], ['ScrollLock', 'ScrLk'], ['Pause', 'Pause'], ['ContextMenu', 'Menu'], ['MetaRight', t('key.right', { key: 'Win' })]];
 
 const UNTESTABLE = new Set(['Fn']); // Fn é tratada dentro do teclado e não gera evento
 const TOTAL = LAYOUT.filter((k) => !UNTESTABLE.has(k.k)).length;
 const byK = new Map(LAYOUT.map((k) => [k.k, k]));
 
-const SIDE = { Left: 'esq.', Right: 'dir.' };
 function keyName(code) {
   const m = /^(Shift|Control|Alt|Meta)(Left|Right)$/.exec(code);
-  if (m) return `${{ Shift: 'Shift', Control: 'Ctrl', Alt: 'Alt', Meta: 'Win' }[m[1]]} ${SIDE[m[2]]}`;
+  if (m) return t(m[2] === 'Left' ? 'key.left' : 'key.right', { key: { Shift: 'Shift', Control: 'Ctrl', Alt: 'Alt', Meta: 'Win' }[m[1]] });
   const ex = EXTRAS.find(([c]) => c === code);
   if (ex) return ex[1];
-  if (code.startsWith('AudioVolume')) return { AudioVolumeUp: 'Volume +', AudioVolumeDown: 'Volume −', AudioVolumeMute: 'Mudo' }[code] || code;
+  if (code.startsWith('AudioVolume')) return { AudioVolumeUp: 'Volume +', AudioVolumeDown: 'Volume −', AudioVolumeMute: t('fn.mute') }[code] || code;
   const lk = byK.get(CODE2K[code]);
   if (lk) return (code.startsWith('Numpad') || code === 'NumLock' ? 'Num ' : '') + lk.l.split(' ')[0].replace(/^Num$/, 'Lock');
   return code.replace(/^(Key|Digit)/, '') || '?';
@@ -82,7 +82,7 @@ function keyboardFig() {
   const keys = LAYOUT.map((k) => {
     const pos = `left:${(k.x / LAYOUT_W) * 100}%;top:${(k.y / LAYOUT_H) * 100}%;width:${(k.w / LAYOUT_W) * 100}%;height:${((k.h || 42) / LAYOUT_H) * 100}%`;
     const cls = `${k.knob ? 'knob' : ''} ${UNTESTABLE.has(k.k) ? 'na' : ''}`;
-    const title = UNTESTABLE.has(k.k) ? 'Fn é lida pelo próprio teclado e não chega ao computador' : k.l;
+    const title = UNTESTABLE.has(k.k) ? t('tt.fnKey') : k.l;
     const lbl = SHORT[k.k] || k.l;
     return `<div class="tt-key ${cls}" style="${pos}" data-k="${esc(k.k)}" title="${esc(title)}"><span class="tt-kl">${esc(lbl)}</span><span class="tt-kc"></span></div>`;
   }).join('');
@@ -106,8 +106,8 @@ function mouseFig() {
 }
 
 const BTN = [
-  [0, 'left', 'Esquerdo'], [2, 'right', 'Direito'], [1, 'middle', 'Meio (roda)'],
-  [3, 'back', 'Voltar (lateral)'], [4, 'forward', 'Avançar (lateral)'],
+  [0, 'left', t('tt.left')], [2, 'right', t('tt.right')], [1, 'middle', t('tt.middle')],
+  [3, 'back', t('tt.back')], [4, 'forward', t('tt.forward')],
 ];
 const BTN_NAME = Object.fromEntries(BTN.map(([b, , n]) => [b, n.replace(/ \(.*/, '')]));
 
@@ -128,53 +128,53 @@ export function testerPage() {
   return `<div class="tester" data-tab="${tab}">
     <div class="tt-head">
       <div class="tt-seg">
-        <button class="${tab === 'kb' ? 'active' : ''}" data-tt-tab="kb">${IC.keyboard}Teclado</button>
-        <button class="${tab === 'mouse' ? 'active' : ''}" data-tt-tab="mouse">${IC.mouse}Mouse</button>
+        <button class="${tab === 'kb' ? 'active' : ''}" data-tt-tab="kb">${IC.keyboard}${t('tt.keyboard')}</button>
+        <button class="${tab === 'mouse' ? 'active' : ''}" data-tt-tab="mouse">${IC.mouse}${t('tt.mouse')}</button>
       </div>
-      <span class="tt-sub" data-show="kb">Aperte as teclas para ver se cada uma responde e quantas o teclado aceita juntas.</span>
-      <span class="tt-sub" data-show="mouse">Clique, role e mova o mouse dentro da área de teste.</span>
+      <span class="tt-sub" data-show="kb">${t('tt.kbSub')}</span>
+      <span class="tt-sub" data-show="mouse">${t('tt.mouseSub')}</span>
       <span class="spacer"></span>
-      <button class="btn-white" data-tt="reset">${IC.reset}Zerar</button>
+      <button class="btn-white" data-tt="reset">${IC.reset}${t('tt.reset')}</button>
     </div>
 
     <section class="tt-kb" data-show="kb">
       <div class="tt-kb-main">
         <div class="tt-area" tabindex="0" data-tt="area">
           ${keyboardFig()}
-          <div class="tt-extras"><span class="tt-extras-l">Outras teclas</span>
+          <div class="tt-extras"><span class="tt-extras-l">${t('tt.otherKeys')}</span>
             ${EXTRAS.map(([c, l]) => `<div class="tt-key tt-xkey" data-code="${c}"><span class="tt-kl">${l}</span><span class="tt-kc"></span></div>`).join('')}
           </div>
-          <div class="tt-cover"><div>${IC.keyboard}<b>Clique aqui para começar</b><span>As teclas ficam presas nesta área (Tab, F5, Espaço…). Aperte Esc para sair.</span></div></div>
-          <div class="tt-live"><i></i>Capturando teclas · Esc sai</div>
+          <div class="tt-cover"><div>${IC.keyboard}<b>${t('tt.start')}</b><span>${t('tt.startHint')}</span></div></div>
+          <div class="tt-live"><i></i>${t('tt.live')}</div>
         </div>
         <div class="tt-legend">
-          <span><i class="lg-idle"></i>Não apertada</span>
-          <span><i class="lg-down"></i>Apertada agora</span>
-          <span><i class="lg-done"></i>Já testada</span>
-          <span class="tt-legend-n">O número no canto conta quantas vezes a tecla foi apertada.</span>
+          <span><i class="lg-idle"></i>${t('tt.idle')}</span>
+          <span><i class="lg-down"></i>${t('tt.down')}</span>
+          <span><i class="lg-done"></i>${t('tt.done')}</span>
+          <span class="tt-legend-n">${t('tt.countHint')}</span>
         </div>
         <div class="tt-stats">
-          ${stat('kdown', 'Pressionamentos')}
-          ${stat('kup', 'Liberações')}
-          ${stat('ktotal', 'Total de eventos')}
-          ${stat('ktested', 'Testadas / total', `0<small>/${TOTAL}</small>`)}
-          <div class="tt-stat tt-roll"><b data-s="kmax">0</b><span>Máximo de teclas juntas</span>
-            <div class="tt-held" data-tt="held"><em>Agora: <b data-s="know">0</b></em></div></div>
+          ${stat('kdown', t('tt.presses'))}
+          ${stat('kup', t('tt.releases'))}
+          ${stat('ktotal', t('tt.total'))}
+          ${stat('ktested', t('tt.tested'), `0<small>/${TOTAL}</small>`)}
+          <div class="tt-stat tt-roll"><b data-s="kmax">0</b><span>${t('tt.rollover')}</span>
+            <div class="tt-held" data-tt="held"><em>${t('tt.now')} <b data-s="know">0</b></em></div></div>
         </div>
       </div>
       <aside class="tt-logbox">
-        <div class="tt-logh"><b>Registro de teclas</b><span data-s="klogn">0 eventos</span></div>
+        <div class="tt-logh"><b>${t('tt.log')}</b><span data-s="klogn">${t('tt.events', { n: 0 })}</span></div>
         <ol class="tt-log" data-tt="klog"></ol>
-        <div class="tt-logempty" data-tt="klogempty">Aperte qualquer tecla<br>para começar a registrar</div>
+        <div class="tt-logempty" data-tt="klogempty">${t('tt.logEmpty')}</div>
       </aside>
     </section>
 
     <section class="tt-ms" data-show="mouse">
       <div class="tt-pad" data-tt="pad">
         ${mouseFig()}
-        <div class="tt-padhint">Clique nesta área para testar os botões</div>
+        <div class="tt-padhint">${t('tt.padHint')}</div>
         <div class="tt-padchips">
-          <span class="tt-chip"><em>Cliques/s</em><b data-s="cps">0</b></span>
+          <span class="tt-chip"><em>${t('tt.cps')}</em><b data-s="cps">0</b></span>
           <span class="tt-chip"><em>Polling</em><b data-s="hznow">--</b></span>
         </div>
         <div class="tt-ripples" data-tt="ripples"></div>
@@ -182,30 +182,30 @@ export function testerPage() {
       <div class="tt-mside">
         <div class="tt-counters">
           ${BTN.map(([b, id, name]) => `<div class="tt-ctr" data-b="${b}"><span>${name}</span><b data-s="b${b}">0</b><em data-s="bd${b}"></em></div>`).join('')}
-          <div class="tt-ctr" data-w="up"><span>${IC.up}Roda para cima</span><b data-s="wup">0</b><em></em></div>
-          <div class="tt-ctr" data-w="down"><span>${IC.down}Roda para baixo</span><b data-s="wdown">0</b><em></em></div>
+          <div class="tt-ctr" data-w="up"><span>${IC.up}${t('tt.wheelUp')}</span><b data-s="wup">0</b><em></em></div>
+          <div class="tt-ctr" data-w="down"><span>${IC.down}${t('tt.wheelDown')}</span><b data-s="wdown">0</b><em></em></div>
         </div>
         <div class="pcard tt-dbl" data-tt="dbl">
           <div class="tt-dbl-top">
-            <div><h3>${IC.warn}Duplo clique anormal</h3>
-              <p>Dois cliques do mesmo botão mais próximos que o limite. Se aparecer sem você clicar duas vezes, aumente o debounce do mouse.</p></div>
+            <div><h3>${IC.warn}${t('tt.dbl')}</h3>
+              <p>${t('tt.dblDesc')}</p></div>
             <b class="tt-dbl-n" data-s="dbl">0</b>
           </div>
           <div class="tt-thr">
-            <span>Limite</span>
+            <span>${t('tt.threshold')}</span>
             <div class="pslider"><input type="range" min="20" max="200" step="5" value="${thr}" data-tt="thr"></div>
             <b data-s="thr">${thr} ms</b>
           </div>
-          <div class="tt-dbl-info"><span>Menor intervalo: <b data-s="minint">--</b></span><span>Maior CPS: <b data-s="cpsmax">0</b></span></div>
+          <div class="tt-dbl-info"><span>${t('tt.minInt')} <b data-s="minint">--</b></span><span>${t('tt.maxCps')} <b data-s="cpsmax">0</b></span></div>
           <div class="tt-dbl-list" data-tt="dbllist"></div>
         </div>
         <div class="pcard tt-poll">
-          <h3>Taxa de polling (estimada)</h3>
-          <p>Mova o mouse sem parar dentro da área. O valor depende também do sistema e da tela.</p>
+          <h3>${t('tt.poll')}</h3>
+          <p>${t('tt.pollDesc')}</p>
           <div class="tt-poll-row">
-            <div><b data-s="hzavg">--</b><span>Média</span></div>
-            <div><b data-s="hzmax">--</b><span>Máxima</span></div>
-            <div><b data-s="hzstd">--</b><span>Taxa provável</span></div>
+            <div><b data-s="hzavg">--</b><span>${t('tt.avg')}</span></div>
+            <div><b data-s="hzmax">--</b><span>${t('tt.max')}</span></div>
+            <div><b data-s="hzstd">--</b><span>${t('tt.likely')}</span></div>
           </div>
           <div class="tt-poll-src" data-s="hzsrc"></div>
         </div>
@@ -276,17 +276,17 @@ export function bindTester(root) {
     li.className = down ? 'down' : 'up';
     li.innerHTML = `<span class="lt">${wall(ts)}</span><span class="ld">${K.logN ? '+' + fmtMs(delta) : ''}</span>`
       + `<span class="lk"><b>${esc(keyName(code))}</b><small>${esc(code)}</small></span>`
-      + `<span class="la">${down ? IC.down + 'Apertou' : IC.up + 'Soltou' + (hold != null ? ` <small>${fmtMs(hold)}</small>` : '')}</span>`;
+      + `<span class="la">${down ? IC.down + t('tt.pressed') : IC.up + t('tt.released') + (hold != null ? ` <small>${fmtMs(hold)}</small>` : '')}</span>`;
     klog.prepend(li);
     K.logN++;
     while (klog.childElementCount > 200) klog.lastElementChild.remove();
     el.classList.add('has-klog');
-    put('klogn', `${K.logN} eventos`, false);
+    put('klogn', t('tt.events', { n: K.logN }), false);
   }
 
   function renderHeld() {
     const box = $('[data-tt="held"]');
-    box.innerHTML = `<em>Agora: <b data-s="know">${K.held.size}</b></em>` + [...K.held.keys()].map((c) => `<span>${esc(keyName(c))}</span>`).join('');
+    box.innerHTML = `<em>${t('tt.now')} <b data-s="know">${K.held.size}</b></em>` + [...K.held.keys()].map((c) => `<span>${esc(keyName(c))}</span>`).join('');
   }
 
   function keyStats() {
@@ -371,7 +371,7 @@ export function bindTester(root) {
     M.dbl++;
     M.dblBy[b] = (M.dblBy[b] || 0) + 1;
     put('dbl', M.dbl);
-    put('bd' + b, `${M.dblBy[b]} duplo${M.dblBy[b] > 1 ? 's' : ''}`, false);
+    put('bd' + b, t(M.dblBy[b] > 1 ? 'tt.dblN' : 'tt.dbl1', { n: M.dblBy[b] }), false);
     ctr(b)?.classList.add('bad');
     const box = $('[data-tt="dbl"]');
     box.classList.add('bad');
@@ -441,7 +441,7 @@ export function bindTester(root) {
   const P = { ts: [], samples: 0, sum: 0, max: 0, last: 0 };
   const RAW = 'onpointerrawupdate' in window;
   const moveType = RAW ? 'pointerrawupdate' : 'pointermove';
-  put('hzsrc', `Fonte: ${RAW ? 'pointerrawupdate' : 'pointermove'} + getCoalescedEvents()`, false);
+  put('hzsrc', t('tt.source', { src: `${RAW ? 'pointerrawupdate' : 'pointermove'} + getCoalescedEvents()` }), false);
   on(pad, moveType, (e) => {
     if (e.pointerType && e.pointerType !== 'mouse') return;
     const list = e.getCoalescedEvents?.() || [];
@@ -488,7 +488,7 @@ export function bindTester(root) {
       K.held.clear(); K.tested.clear(); K.count.clear();
       for (const n of el.querySelectorAll('.tt-key')) { n.classList.remove('down', 'tested'); n.querySelector('.tt-kc').textContent = ''; }
       for (const n of extrasBox.querySelectorAll('.tt-xkey')) if (!EXTRAS.some(([c]) => c === n.dataset.code)) n.remove();
-      klog.innerHTML = ''; el.classList.remove('has-klog'); put('klogn', '0 eventos', false);
+      klog.innerHTML = ''; el.classList.remove('has-klog'); put('klogn', t('tt.events', { n: 0 }), false);
       keyStats(); renderHeld();
     } else {
       Object.assign(M, { count: {}, dbl: 0, dblBy: {}, lastDown: {}, clicks: [], cpsMax: 0, minInt: null, minBtn: null });

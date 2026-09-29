@@ -8,6 +8,7 @@
 // 'card' = foto do cartão da home. 'top' = vista de cima do teclado (tela de teclas);
 // no mouse o M HUB usa a mesma foto nos dois lugares.
 import CATALOG from './data/device-catalog.js';
+import { lang } from './i18n.js';
 
 // Mesma normalização para o nome do aparelho e para os nomes do catálogo.
 const norm = (s) => ` ${String(s || '').toUpperCase().replace(/^MCHOSE\s+/, '').replace(/[_\s-]+/g, ' ').trim()} `;
@@ -52,11 +53,23 @@ export function findModel(model, { kind, vendorId, productId } = {}) {
   return found;
 }
 
+// O catálogo traz os nomes das cores em português; em inglês o nome sai do id (vindo das classes
+// em inglês do M HUB), sem o modelo e com as palavras estranhas do bundle corrigidas.
+const MODEL_WORD = /^(a\d|ax\d|v\d|v9t|z75s?|kx75|gx87(v2)?|ace\d+(air\d|-?v\d)?|god\d+|k87|pro|ultra|r7|copy|headset)$/;
+const EN_WORD = { sliver: 'silver', golden: 'gold', shuang: 'orange', yunwu: 'mist', loose: 'moss', barde: 'burgundy', shaded: 'gradient', blueness: 'bluish', glaze: 'glazed', shallow: 'soft',
+  bmw: 'BMW', halo: 'Halo', blue2: 'blue 2', blue3: 'blue 3', pink2: 'pink 2' };
+export function colorLabelEn(id) {
+  const words = id.split('-').filter((w) => !MODEL_WORD.test(w)).map((w) => EN_WORD[w] || w)
+    .filter((w, i, a) => w !== a[i - 1]);
+  const s = words.join(' ') || id;
+  return s[0].toUpperCase() + s.slice(1);
+}
+
 // Cores para as bolinhas do cartão: [{ id, label, hex }] (hex pode ser gradiente ou url()).
 export function colorsFor(model, opts) {
   const m = findModel(model, opts);
   return m ? m.colors.map((c) => ({
-    id: c.id, label: c.label, hex: c.dot.startsWith('url(') ? `url('${imgUrl(c.dot.slice(4, -1))}')` : c.dot,
+    id: c.id, label: lang === 'pt-BR' ? c.label : colorLabelEn(c.id), hex: c.dot.startsWith('url(') ? `url('${imgUrl(c.dot.slice(4, -1))}')` : c.dot,
   })) : [];
 }
 

@@ -4,6 +4,7 @@ import {
   MAX_PROFILES, NAME_MAX, adapterFor, loadProfiles, saveProfiles, activeIndex, nextName,
   profileData, exportProfile, readJsonFile, parseImport,
 } from '../profiles.js';
+import { t } from '../i18n.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const svg = (d) => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
@@ -32,11 +33,11 @@ function toast(msg, error = false) {
 
 function menuHtml(i) {
   if (i < 0) return `<div class="pf-menu" role="menu">
-    <button data-pf="export" data-i="-1">${IC.export}Exportar backup</button></div>`;
+    <button data-pf="export" data-i="-1">${IC.export}${t('pf.exportBackup')}</button></div>`;
   return `<div class="pf-menu" role="menu">
-    <button data-pf="rename" data-i="${i}">${IC.edit}Renomear</button>
-    <button data-pf="export" data-i="${i}">${IC.export}Exportar</button>
-    <button data-pf="delete" data-i="${i}" class="danger">${IC.trash}Excluir</button></div>`;
+    <button data-pf="rename" data-i="${i}">${IC.edit}${t('pf.rename')}</button>
+    <button data-pf="export" data-i="${i}">${IC.export}${t('pf.export')}</button>
+    <button data-pf="delete" data-i="${i}" class="danger">${IC.trash}${t('pf.delete')}</button></div>`;
 }
 
 function rowHtml(i, name, on, ui) {
@@ -46,8 +47,8 @@ function rowHtml(i, name, on, ui) {
     <span class="pf-dot"></span>
     ${editing
     ? `<input class="pf-input" data-pf-input="${i}" maxlength="${NAME_MAX}" value="${esc(name)}" spellcheck="false">`
-    : `<span class="pf-name">${esc(name)}</span>${busy ? '<span class="pf-busy">Aplicando…</span>' : ''}`}
-    <button class="pf-more" data-pf="menu" data-i="${i}" title="Mais opções">${IC.dots}</button>
+    : `<span class="pf-name">${esc(name)}</span>${busy ? `<span class="pf-busy">${t('pf.applying')}</span>` : ''}`}
+    <button class="pf-more" data-pf="menu" data-i="${i}" title="${t('pf.more')}">${IC.dots}</button>
     ${ui.menu === i ? menuHtml(i) : ''}
   </div>`;
 }
@@ -55,19 +56,19 @@ function rowHtml(i, name, on, ui) {
 // HTML da parte de perfis da barra lateral (substitui a linha fixa "Perfil do aparelho").
 export function profilesSidebar(ctx) {
   const ad = adapterFor(ctx.drv);
-  if (!ad) return '<div class="side-row">Perfil do aparelho</div>';
+  if (!ad) return `<div class="side-row">${t('pf.device')}</div>`;
   const list = loadProfiles(ad.storageKey);
   const act = activeIndex(list);
   const ui = uiOf(ctx.id);
   const full = list.length >= MAX_PROFILES;
   const ready = ad.ready() && ctx.st.online !== false;
   return `<div class="pf" data-pf-root>
-    <button class="pf-create" data-pf="create" ${full || !ready ? 'disabled' : ''} title="${full ? `Limite de ${MAX_PROFILES} perfis` : 'Cria um perfil com a configuração atual'}">${IC.plus}Criar</button>
-    <button class="pf-import" data-pf="import" ${full ? 'disabled' : ''}>${IC.import}Importar</button>
+    <button class="pf-create" data-pf="create" ${full || !ready ? 'disabled' : ''} title="${full ? t('pf.limit', { max: MAX_PROFILES }) : t('pf.createTip')}">${IC.plus}${t('pf.create')}</button>
+    <button class="pf-import" data-pf="import" ${full ? 'disabled' : ''}>${IC.import}${t('pf.import')}</button>
     <input type="file" accept=".json,application/json" data-pf-file hidden>
-    <div class="pf-title">Perfis <span class="pf-help" title="O primeiro item é o que está gravado no aparelho. Os perfis ficam neste computador; clique num perfil para gravá-lo no aparelho.">${IC.help}</span><span class="pf-count">(${list.length}/${MAX_PROFILES})</span></div>
+    <div class="pf-title">${t('pf.title')} <span class="pf-help" title="${t('pf.help')}">${IC.help}</span><span class="pf-count">(${list.length}/${MAX_PROFILES})</span></div>
     <div class="pf-list">
-      ${rowHtml(-1, ctx.drv.kind === 'keyboard' ? 'Salvo no teclado' : 'Salvo no mouse', act < 0, ui)}
+      ${rowHtml(-1, t(ctx.drv.kind === 'keyboard' ? 'pf.onKeyboard' : 'pf.onMouse'), act < 0, ui)}
       ${list.map((p, i) => rowHtml(i, p.name, i === act, ui)).join('')}
     </div>
   </div>`;
@@ -115,7 +116,7 @@ export function bindProfilesSidebar(root, ctx) {
       const list = load();
       const name = input.value.trim().slice(0, NAME_MAX);
       if (commit && list[i] && name && name !== list[i].name) {
-        if (list.some((p, j) => j !== i && p.name === name)) toast('Já existe um perfil com esse nome.', true);
+        if (list.some((p, j) => j !== i && p.name === name)) toast(t('pf.nameTaken'), true);
         else { list[i].name = name; save(list); }
       }
       ui.editing = null;
@@ -141,9 +142,9 @@ export function bindProfilesSidebar(root, ctx) {
       const p = parseImport(obj, ad, list);
       list.push(p);
       save(list);
-      toast(`Perfil "${p.name}" importado. Clique nele para gravar no aparelho.`);
+      toast(t('pf.imported', { name: p.name }));
     } catch (err) {
-      toast('Falha ao importar: ' + (err.message || err), true);
+      toast(t('pf.importFail', { err: err.message || err }), true);
     }
     redraw();
   };
@@ -162,9 +163,9 @@ export function bindProfilesSidebar(root, ctx) {
 
     if (act === 'create') {
       const list = load();
-      if (list.length >= MAX_PROFILES) return toast(`Limite de ${MAX_PROFILES} perfis atingido.`, true);
+      if (list.length >= MAX_PROFILES) return toast(t('pf.limitHit', { max: MAX_PROFILES }), true);
       const data = await ad.snapshot();
-      if (!data) return toast('A configuração do aparelho ainda não foi lida.', true);
+      if (!data) return toast(t('pf.notRead'), true);
       list.push({ name: nextName(list), active: false, ...data });
       save(list);
       ui.editing = list.length - 1;   // já abre para renomear
@@ -176,7 +177,7 @@ export function bindProfilesSidebar(root, ctx) {
     if (act === 'export') {
       if (i < 0) {
         const data = await ad.snapshot();
-        if (!data) return toast('A configuração do aparelho ainda não foi lida.', true);
+        if (!data) return toast(t('pf.notRead'), true);
         exportProfile(ad.model, { name: `${ad.model} backup ${new Date().toISOString().slice(0, 10)}`, ...data });
       } else {
         const p = load()[i];
@@ -190,7 +191,7 @@ export function bindProfilesSidebar(root, ctx) {
       const p = list[i];
       if (!p) return redraw();
       redraw();
-      const ok = await ctx.confirm(`Excluir o perfil "${p.name}"?`, 'O perfil sai deste computador. O que está gravado no aparelho não muda.');
+      const ok = await ctx.confirm(t('pf.deleteQ', { name: p.name }), t('pf.deleteQBody'));
       if (!ok) return;
       const fresh = load();
       const at = fresh.findIndex((x) => x.name === p.name);
@@ -229,7 +230,7 @@ export function bindProfilesSidebar(root, ctx) {
           after.forEach((x, j) => { x.active = ok && j === at; });
           save(after);
         }
-      }, `Perfil "${p.name}" gravado no aparelho`);
+      }, t('pf.applied', { name: p.name }));
       if (!ok) redraw();
     }
   };

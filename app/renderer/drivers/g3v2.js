@@ -3,6 +3,7 @@
 // sem report id. Pedido começa com 0x55 <cmd>, resposta com 0xAA <cmd>.
 // Nos pacotes de configuração, o offset do pedido é igual ao da resposta.
 import { HidDriver, hex } from './base.js';
+import { t } from '../i18n.js';
 
 const DPI_12K = { min: 200, max: 12000, marks: [200, 2000, 4000, 6000, 8000, 10000, 12000] };
 const DPI_26K = { min: 200, max: 26000, marks: [200, 2200, 4200, 6200, 8000, 12000, 20000, 26000] };
@@ -94,7 +95,7 @@ export class G3V2Driver extends HidDriver {
   }
 
   async poll() {
-    const st = { name: this.name, mode: this.isCable ? 'wired' : '2.4g', via: this.isCable ? 'Cabo USB' : 'Receptor 2.4G' };
+    const st = { name: this.name, mode: this.isCable ? 'wired' : '2.4g', via: t(this.isCable ? 'via.cable' : 'via.receiver') };
     if (!this.dev) return { ...st, online: false };
 
     // No receptor, 0xED diz se o mouse está ligado (1 = desligado, em repouso ou fora de alcance).
@@ -152,7 +153,7 @@ export class G3V2Driver extends HidDriver {
   // Gravação: o bloco é regravado inteiro, com os campos nos mesmos offsets da leitura.
   async writeConfig(patch) {
     if (!this.config) await this.readConfig();
-    if (!this.config) throw new Error('Mouse não respondeu');
+    if (!this.config) throw new Error(t('err.mouseNoReply'));
     const c = { ...this.config, ...patch };
     c.dpis = [...(patch.dpis || this.config.dpis)];
     while (c.dpis.length < 6) c.dpis.push(c.dpis[c.dpis.length - 1] || 800);
@@ -212,7 +213,7 @@ export class G3V2Driver extends HidDriver {
   async readMacroHeader() {
     const r = await this.request(0, packet([0x55, CMD.macroRead, 0, 0, 56, 0, 0, 0]),
       (_rid, d) => d[0] === 0xaa && d[1] === CMD.macroRead, { timeout: 500, tries: 2 });
-    if (!r) throw new Error('Mouse não respondeu à leitura das macros');
+    if (!r) throw new Error(t('err.mouseMacroRead'));
     const head = r.slice(8, 64);
     this.raw.macroHead = hex(head);
     return head;
@@ -249,7 +250,7 @@ export class G3V2Driver extends HidDriver {
         const sum = s.reduce((a, b) => a + b, 0) & 0xff;
         const r = await this.request(0, packet([0x55, CMD.macroWrite, 0, sum, ...s]),
           (_rid, d) => d[0] === 0xaa && d[1] === CMD.macroWrite, { timeout: 600, tries: 1 });
-        if (!r) throw new Error('Mouse não confirmou a gravação da macro');
+        if (!r) throw new Error(t('err.mouseMacroWrite'));
       }
       const c = await this.request(0, packet(CMD.macroCommit), (_rid, d) => d[0] === 0xaa && d[1] === 0x10, { timeout: 800, tries: 1 });
       this.raw.macroCommitAck = c && hex(c.slice(0, 16));
@@ -314,7 +315,7 @@ export function encodeMacros(macros) {
     });
   });
   const buf = [...head, 0, 0, 0x80, 0, ...body];
-  if (buf.length > MACRO_AREA) throw new Error('Macros grandes demais para a memória do mouse');
+  if (buf.length > MACRO_AREA) throw new Error(t('err.macrosTooBig', { dev: t('noun.mouse') }));
   return Uint8Array.from(buf);
 }
 
