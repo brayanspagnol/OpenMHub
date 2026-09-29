@@ -13,7 +13,7 @@ result = {'pw': None}
 
 
 def on_activate(app):
-    win = Gtk.ApplicationWindow(application=app, title='M HUB Linux: senha de administrador')
+    win = Gtk.ApplicationWindow(application=app, title='OpenMHub: senha de administrador')
     win.set_default_size(420, -1)
     win.set_resizable(False)
     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)

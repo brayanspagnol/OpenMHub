@@ -1,8 +1,9 @@
-// Imagens oficiais dos aparelhos MCHOSE, as mesmas que o M HUB mostra.
+// Fotos oficiais dos aparelhos MCHOSE, as mesmas que o M HUB mostra.
 //
 // O mapa modelo -> cores -> imagens vem de data/device-catalog.js, gerado por
 // tools/fetch-device-assets.py a partir do próprio M HUB (bundle web + cardList.json do CDN).
-// As imagens ficam em assets/devices/ porque a CSP do index.html só aceita img-src 'self'.
+// As fotos não vêm no app: o catálogo guarda a URL do CDN e o protocolo mhub-img (main.js)
+// baixa na primeira vez e guarda em cache. Sem rede, a <img> falha e app.js mostra o ícone genérico.
 //
 // 'card' = foto do cartão da home. 'top' = vista de cima do teclado (tela de teclas);
 // no mouse o M HUB usa a mesma foto nos dois lugares.
@@ -19,6 +20,17 @@ const hasName = (product, name) => {
 const LEGACY = { graywhite: 'gray-white', bluewhite: 'star-blue', grayside: 'black-side', pink: 'pink-line', pinkside: 'pink-side' };
 
 const cache = new Map();
+
+// https://cdn.mchose.com.cn/x.png -> mhub-img://cdn.mchose.com.cn/x.png (URL codifica acentos e chinês).
+export const imgUrl = (u) => {
+  const url = new URL(u);
+  return `mhub-img://${url.host}${url.pathname}`.replace(/'/g, '%27');
+};
+// Fotos que falharam (offline, CDN lento): o app usa o ícone genérico e tenta de novo
+// depois de 2 min ou quando a rede volta.
+const failed = new Map(); // src -> horário da falha
+export const markFailed = (src) => failed.set(src, Date.now());
+addEventListener('online', () => failed.clear());
 
 // Acha o modelo como o M HUB: primeiro pelo VID/PID (teclados magnéticos), depois pelo
 // primeiro nome do catálogo contido no nome do produto (a ordem do catálogo resolve
@@ -43,7 +55,9 @@ export function findModel(model, { kind, vendorId, productId } = {}) {
 // Cores para as bolinhas do cartão: [{ id, label, hex }] (hex pode ser gradiente ou url()).
 export function colorsFor(model, opts) {
   const m = findModel(model, opts);
-  return m ? m.colors.map((c) => ({ id: c.id, label: c.label, hex: c.dot })) : [];
+  return m ? m.colors.map((c) => ({
+    id: c.id, label: c.label, hex: c.dot.startsWith('url(') ? `url('${imgUrl(c.dot.slice(4, -1))}')` : c.dot,
+  })) : [];
 }
 
 export function deviceImage(model, view = 'card', color, opts = {}) {
@@ -51,5 +65,6 @@ export function deviceImage(model, view = 'card', color, opts = {}) {
   if (!m) return null; // renders.js mostra o ícone genérico do M HUB
   const id = LEGACY[color] && !m.colors.some((c) => c.id === color) ? LEGACY[color] : color;
   const c = m.colors.find((x) => x.id === id) || m.colors[0];
-  return (view === 'top' && c.top) || c.card;
+  const src = imgUrl((view === 'top' && c.top) || c.card);
+  return Date.now() - (failed.get(src) || 0) < 120000 ? null : src;
 }

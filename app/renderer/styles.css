@@ -547,7 +547,10 @@ html[theme-mode="dark"] .dpi2-fill, html[theme-mode="dark"] .dpi2-slider input[t
 html[theme-mode="dark"] .dpi2-track > b { background: #2b2b2b; }
 
 /* ---------- Tela inicial no layout do M HUB atual ---------- */
-.logo-k { width: 26px; height: 26px; margin-right: 6px; vertical-align: -4px; }
+.wordmark .logo { width: 28px; height: 28px; margin-right: 10px; }
+/* Comando da regra udev (Flatpak): texto selecionável e botão de copiar. */
+.empty .cmd { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; text-align: left; }
+.empty .cmd code { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 8px; background: var(--card); font: 12px/1.5 ui-monospace, monospace; white-space: pre-wrap; word-break: break-all; user-select: text; }
 .wordmark { display: flex; align-items: center; }
 .home { align-items: stretch; padding: 36px max(40px, calc((100% - 1370px) / 2)) 24px; }
 .home-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }

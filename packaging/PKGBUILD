@@ -1,4 +1,4 @@
-# Pacote Arch do M HUB Linux, gerado a partir deste repositório.
+# Pacote Arch do OpenMHub, gerado a partir deste repositório.
 # Uso: cd packaging && makepkg -si   (ou packaging/build-installer.sh, que põe o pacote em dist/)
 
 # Os arquivos vêm do próprio repositório (um nível acima, ou MHUB_ROOT).
@@ -8,7 +8,7 @@ pkgname=mhub-linux
 # Versão lida de app/package.json.
 pkgver=$(sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$_root/app/package.json" | head -n1 | tr - _)
 pkgrel=1
-pkgdesc='Unofficial Linux configurator for MCHOSE peripherals, modelled on M HUB'
+pkgdesc='OpenMHub: unofficial Linux configurator for MCHOSE mice and keyboards'
 arch=('any')
 license=('MIT')
 depends=('electron42')

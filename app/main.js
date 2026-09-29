@@ -1,16 +1,24 @@
 // Processo principal: janela sem moldura, permissões WebHID, bandeja, notificações e preferências.
-const { app, BrowserWindow, ipcMain, session, Tray, Menu, Notification, nativeImage } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Tray, Menu, Notification, nativeImage, protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const crypto = require('crypto');
 const { execFile } = require('child_process');
 
 // userData fixo em ~/.config/mhub-linux (definido antes do setName, que mudaria a pasta);
-// o nome "M HUB Linux" aparece nas notificações. A classe da janela segue "mhub-linux".
+// o nome "OpenMHub" aparece nas notificações. A classe da janela segue "mhub-linux" na instalação
+// nativa; no Flatpak é o id do app, para casar com o .desktop do pacote.
+const FLATPAK = process.env.FLATPAK_ID || '';
+const APP_CLASS = FLATPAK || 'mhub-linux';
+const NAME = 'OpenMHub';
 app.setPath('userData', path.join(app.getPath('appData'), 'mhub-linux'));
-app.setName('M HUB Linux');
+app.setName(NAME);
+app.setDesktopName(`${APP_CLASS}.desktop`);
 app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
-app.commandLine.appendSwitch('class', 'mhub-linux');
+app.commandLine.appendSwitch('class', APP_CLASS);
+// Fotos dos aparelhos: mhub-img://cdn.mchose.com.cn/<caminho> (ver serveImage).
+protocol.registerSchemesAsPrivileged([{ scheme: 'mhub-img', privileges: { standard: true, secure: true } }]);
 const SHOT = process.env.MHUB_SHOT;
 // Teste de captura usa perfil à parte para não brigar com uma instância aberta.
 if (SHOT) app.setPath('userData', path.join(os.tmpdir(), 'mhub-linux-shot'));
@@ -56,10 +64,56 @@ function clean(key, value) {
   return Boolean(value);
 }
 
+// ---------- Fotos dos aparelhos ----------
+// As fotos não vêm no app: na primeira vez são baixadas do CDN da MCHOSE e ficam em
+// userData/device-images. Só aceita esse CDN. Sem rede devolve 404 e a interface usa o ícone genérico.
+const IMG_HOST = 'cdn.mchose.com.cn';
+const IMG_MAX = 20 * 1024 * 1024;
+const imgDir = () => path.join(app.getPath('userData'), 'device-images');
+const imgJobs = new Map(); // arquivo -> Promise (vários <img> da mesma foto baixam uma vez só)
+const imgFailed = new Map(); // arquivo -> horário da falha (não tenta de novo por 1 min)
+
+async function downloadImage(src, file) {
+  // no-store: a foto já fica no nosso cache. redirect error: não segue para fora do CDN.
+  const res = await net.fetch(src, { cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(60000) });
+  const type = res.headers.get('content-type') || '';
+  if (!res.ok || !type.startsWith('image/')) throw new Error(`${res.status} ${type}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (buf.length > IMG_MAX) throw new Error('imagem grande demais');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.${process.pid}.part`;
+  fs.writeFileSync(tmp, buf);
+  fs.renameSync(tmp, file); // atômico: nunca fica meia foto no cache
+}
+
+async function serveImage(req) {
+  const url = new URL(req.url);
+  // pathname já vem normalizado (sem ..) e codificado; só .png/.jpg/.webp do CDN.
+  if (url.host !== IMG_HOST || !/^\/[\w%./-]+\.(png|jpe?g|webp)$/i.test(url.pathname)) {
+    return new Response('', { status: 403 });
+  }
+  const ext = path.extname(url.pathname).toLowerCase();
+  const file = path.join(imgDir(), crypto.createHash('sha1').update(url.pathname).digest('hex') + ext);
+  if (!fs.existsSync(file)) {
+    if (Date.now() - (imgFailed.get(file) || 0) < 60000) return new Response('', { status: 404 });
+    if (!imgJobs.has(file)) {
+      imgJobs.set(file, downloadImage(`https://${IMG_HOST}${url.pathname}`, file)
+        .then(() => imgFailed.delete(file))
+        .catch((e) => { imgFailed.set(file, Date.now()); console.warn('Foto indisponível:', url.pathname, e.message); })
+        .finally(() => imgJobs.delete(file)));
+    }
+    await imgJobs.get(file);
+    if (!fs.existsSync(file)) return new Response('', { status: 404 });
+  }
+  const type = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+  return new Response(fs.readFileSync(file), { headers: { 'content-type': type, 'cache-control': 'max-age=31536000' } });
+}
+
 // ---------- Início automático ----------
 const autostartFile = () => path.join(app.getPath('home'), '.config', 'autostart', 'mhub-linux.desktop');
 
 function applyAutostart() {
+  if (FLATPAK) return; // no sandbox não dá para gravar em ~/.config/autostart nem no config do Hyprland
   const file = autostartFile();
   if (!prefs.autostart) {
     fs.rmSync(file, { force: true });
@@ -74,7 +128,7 @@ function applyAutostart() {
   fs.writeFileSync(file, [
     '[Desktop Entry]',
     'Type=Application',
-    'Name=M HUB Linux',
+    `Name=${NAME}`,
     'Comment=Bateria e configurações dos periféricos MCHOSE',
     `Exec=${exec}`,
     'Icon=mhub-linux',
@@ -148,7 +202,7 @@ function createWindow(hidden) {
     show: !hidden,
     icon: ICON,
     backgroundColor: '#f2f3f7',
-    title: 'M HUB Linux',
+    title: NAME,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -185,7 +239,7 @@ function createTray() {
   try {
     const img = nativeImage.createFromPath(path.join(ASSETS, 'tray-32.png'));
     tray = new Tray(img);
-    tray.setToolTip('M HUB Linux');
+    tray.setToolTip(NAME);
     tray.on('click', showWindow);
     updateTray();
     trayOk = true;
@@ -218,14 +272,14 @@ function deviceLine(d) {
 function updateTray() {
   if (!tray) return;
   const lines = devices.map(deviceLine);
-  tray.setToolTip(['M HUB Linux', ...(lines.length ? lines : ['Nenhum dispositivo'])].join('\n'));
+  tray.setToolTip([NAME, ...(lines.length ? lines : ['Nenhum dispositivo'])].join('\n'));
   const items = lines.length
     ? lines.map((label) => ({ label, enabled: false }))
     : [{ label: 'Nenhum dispositivo', enabled: false }];
   tray.setContextMenu(Menu.buildFromTemplate([
     ...items,
     { type: 'separator' },
-    { label: 'Abrir M HUB', click: showWindow },
+    { label: `Abrir ${NAME}`, click: showWindow },
     { label: 'Sair', click: () => { quitting = true; app.quit(); } },
   ]));
 }
@@ -367,6 +421,8 @@ ipcMain.handle('prefs:set', (_e, key, value) => {
   if (key === 'lowBattery') alerts.forEach((st) => { st.low = false; });
 });
 ipcMain.handle('version', () => app.getVersion());
+// Diferenças do Flatpak na interface: sem início automático e regra udev instalada à mão.
+ipcMain.handle('env', () => ({ flatpak: !!FLATPAK }));
 // Notificação vinda da interface (ex.: troca de DPI). tag 'dpi' respeita a preferência dpiNotify.
 ipcMain.on('notify', (_e, title, body, opts) => {
   const o = opts && typeof opts === 'object' ? opts : {};
@@ -397,6 +453,10 @@ if (setAutostart) {
   app.on('before-quit', () => { quitting = true; });
   app.on('window-all-closed', () => app.quit());
   app.whenReady().then(() => {
+    protocol.handle('mhub-img', (req) => serveImage(req).catch((e) => {
+      console.warn('mhub-img:', e.message);
+      return new Response('', { status: 404 });
+    }));
     loadPrefs();
     if (prefs.autostart) {
       try { applyAutostart(); } catch (e) { console.error(e.message); }

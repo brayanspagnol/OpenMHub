@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instala ou remove o M HUB Linux para o usuário atual (sem npm, sem root).
+# Instala ou remove o OpenMHub para o usuário atual (sem npm, sem root).
 # Só o electron42 (pacman) e a regra udev precisam de root; os dois são pulados se já estiverem instalados.
 #
 # Uso: install.sh [opções]
@@ -103,7 +103,7 @@ if [ "$ui" = gui ]; then
   ui=terminal
   if ! [ -t 0 ]; then
     msg="Não foi possível abrir o instalador gráfico: ele precisa de uma sessão gráfica e do python-gobject (GTK 4). Rode num terminal: sh MHUB-Linux-Installer.run --terminal"
-    command -v notify-send >/dev/null 2>&1 && notify-send "M HUB Linux" "$msg" || true
+    command -v notify-send >/dev/null 2>&1 && notify-send "OpenMHub" "$msg" || true
     echo "$msg" >&2
     exit 1
   fi
@@ -117,7 +117,7 @@ ask() { # ask <pergunta> <padrão s|n>
 }
 
 if [ "$ui" = terminal ] && [ "$yes" = 0 ]; then
-  echo "M HUB Linux $version: instalador"
+  echo "OpenMHub $version: instalador"
   if [ -f "$dest/app/package.json" ]; then
     echo "Instalado: versão $(version_of "$dest/app") em $dest"
     echo "  1) Atualizar/reinstalar   2) Desinstalar   3) Sair"
@@ -137,7 +137,7 @@ fi
 
 # ---------- Desinstalar ----------
 if [ "$action" = uninstall ]; then
-  step stop run "Fechando o M HUB Linux"
+  step stop run "Fechando o OpenMHub"
   if pkill -f "$(running_pattern)" 2>/dev/null; then step stop ok "App fechado"; else step stop skip "Não estava aberto"; fi
 
   # A regra udev sai antes dos arquivos: a janela de senha (askpass) pode estar dentro de $dest.
@@ -172,9 +172,9 @@ if [ "$action" = uninstall ]; then
   step autostart ok "Início automático removido"
 
   if [ "$all" = 1 ]; then
-    step done ok "M HUB Linux removido, com preferências e regra udev"
+    step done ok "OpenMHub removido, com preferências e regra udev"
   else
-    step done ok "M HUB Linux removido (regra udev e preferências mantidas)"
+    step done ok "OpenMHub removido (regra udev e preferências mantidas)"
   fi
   exit 0
 fi
@@ -215,7 +215,7 @@ install -Dm644 "$src/udev/70-mhub-linux.rules" "$dest/udev/70-mhub-linux.rules"
 mkdir -p "$bin"
 cat > "$launcher" <<LAUNCHER
 #!/usr/bin/env bash
-# Lançador do M HUB Linux (instalado por install.sh).
+# Lançador do OpenMHub (instalado por install.sh).
 export MHUB_LAUNCHER="$launcher"
 exec env -u ELECTRON_RUN_AS_NODE electron42 "$dest/app" "\$@"
 LAUNCHER
@@ -243,7 +243,7 @@ if [ -n "$autostart" ]; then
 else
   # Atualiza o atalho de início automático, se já estiver ligado.
   [ -f "$auto" ] && sed -i "s|^Exec=.*|Exec=\"$launcher\" --hidden|" "$auto"
-  step shortcut ok "Atalho \"M HUB Linux\" no menu de aplicativos"
+  step shortcut ok "Atalho \"OpenMHub\" no menu de aplicativos"
 fi
 
 step udev run "Verificando a regra udev"
@@ -263,4 +263,4 @@ case ":$PATH:" in
   *":$bin:"*) ;;
   *) [ "$machine" = 1 ] || echo "Aviso: $bin não está no PATH; o atalho do menu funciona mesmo assim." ;;
 esac
-step done ok "Pronto. Abra \"M HUB Linux\" no menu de aplicativos ou rode: mhub-linux"
+step done ok "Pronto. Abra \"OpenMHub\" no menu de aplicativos ou rode: mhub-linux"

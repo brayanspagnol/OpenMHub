@@ -1,4 +1,4 @@
-import { icon, batteryIcon, MCHOSE_LOGO } from './icons.js';
+import { icon, batteryIcon } from './icons.js';
 import { mouseRender, keyboardRender, receiverRender } from './renders.js';
 import { createDriver } from './drivers/index.js';
 import { mousePane, bindMousePane } from './views/mouse.js';
@@ -30,6 +30,7 @@ const state = {
   homeView: store.get('homeView', 'grid'),
   ui: new Map(),         // id do aparelho -> estado da interface (aba de teclas, DPI em edição...)
   prefs: null,           // preferências do processo principal (bandeja, notificações, autostart)
+  flatpak: false,        // rodando no Flatpak: sem início automático, regra udev instalada à mão
 };
 
 /* ---------- Tema e barra de título ---------- */
@@ -63,6 +64,16 @@ $('#btn-refresh').onclick = async (e) => {
   await rescan(true);
 };
 window.addEventListener('keydown', (e) => { if (e.key === 'F12') window.mhub?.win('devtools'); });
+// Foto do aparelho que não carregou (offline, CDN fora): marca como falha e redesenha;
+// deviceImage passa a devolver null e cada tela usa o ícone genérico.
+let imgRetry = null;
+document.addEventListener('error', (e) => {
+  const src = e.target?.tagName === 'IMG' && e.target.getAttribute('src');
+  if (!src?.startsWith('mhub-img:') || !images.markFailed) return;
+  images.markFailed(src);
+  clearTimeout(imgRetry);
+  imgRetry = setTimeout(() => render(true), 50);
+}, true);
 
 /* ---------- Descoberta de aparelhos ---------- */
 // Cada interface USB vira um HIDDevice no WebHID; agrupamos pelo aparelho físico.
@@ -201,13 +212,18 @@ function renderTitle() {
   const tb = $('#titlebar');
   if (state.view === 'home') {
     tb.classList.remove('bordered');
-    left.innerHTML = `<div class="wordmark">${MCHOSE_LOGO}MCHOSE<small>HUB Linux</small></div>`;
+    left.innerHTML = `<div class="wordmark"><img class="logo" src="../assets/icon.svg" alt="">OpenMHub<small>Não oficial · para aparelhos MCHOSE</small></div>`;
   } else {
     tb.classList.add('bordered');
     left.innerHTML = `<button class="back-btn" id="back">${icon('home')}Voltar ao início</button>`;
     $('#back').onclick = () => go('home');
   }
 }
+
+// Mesma regra de udev/70-mhub-linux.rules, num comando só para colar no terminal (bash, zsh ou fish).
+const UDEV_CMD = `printf '%s\\n' ${['3837', '41e4'].map((v) => `'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="${v}", MODE="0660", TAG+="uaccess"'`).join(' ')}`
+  + ' | sudo tee /etc/udev/rules.d/70-mhub-linux.rules >/dev/null'
+  + ' && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw';
 
 function renderHome() {
   const devs = logicalDevices();
@@ -219,8 +235,10 @@ function renderHome() {
     cards = `<div class="empty"><div class="empty-ico">${icon('devices')}</div>
       <h3>Nenhum aparelho conectado ainda</h3>
       <p>Ligue seu mouse ou teclado MCHOSE, pelo cabo ou pelo receptor sem fio. Ele aparece aqui sozinho, sem precisar reabrir o app.</p>
-      <details><summary>Já está ligado e não aparece?</summary>
-        <p>Tire o receptor ou o cabo e conecte de novo. Se continuar sem aparecer, rode o instalador do M HUB Linux mais uma vez: ele libera o acesso do app aos aparelhos.</p></details>
+      <details ${state.flatpak ? 'open' : ''}><summary>Já está ligado e não aparece?</summary>
+        ${state.flatpak ? `<p>No Flatpak, o acesso aos aparelhos precisa de uma regra do udev, instalada uma vez só. Rode este comando num terminal (ele pede sua senha), depois tire e conecte de novo o receptor ou o cabo:</p>
+        <div class="cmd"><code id="udev-cmd">${esc(UDEV_CMD)}</code><button class="btn-white" id="copy-udev">Copiar</button></div>`
+    : '<p>Tire o receptor ou o cabo e conecte de novo. Se continuar sem aparecer, rode o instalador do OpenMHub mais uma vez: ele libera o acesso do app aos aparelhos.</p>'}</details>
     </div>`;
   } else {
     cards = `<div class="cards ${state.homeView === 'list' ? 'list' : ''}">${devs.map(({ id, drv, st }) => `
@@ -320,7 +338,8 @@ function renderSettings() {
   } else if (tab === 'about') {
     body = `<h2>Sobre</h2>
       <div class="toggle-card about-card"><img src="../assets/icon.svg" alt="">
-        <div><b>M HUB Linux <span id="app-version"></span></b><span>Configurador não oficial para mouses e teclados MCHOSE no Linux. Não é afiliado à MCHOSE.</span></div></div>
+        <div><b>OpenMHub <span id="app-version"></span></b><span>Configurador de código aberto para mouses e teclados MCHOSE no Linux.</span></div></div>
+      ${card('Projeto não oficial', 'Não é afiliado, patrocinado nem aprovado pela MCHOSE. MCHOSE e M HUB são marcas dos seus donos. As fotos dos aparelhos são baixadas do site da MCHOSE na primeira vez e ficam guardadas no computador.', '')}
       ${card('Atualização de firmware', 'Não é feita por este app, para não arriscar o aparelho. Use o M HUB oficial no Windows.', '')}`;
   } else {
     body = `<h2>Configurações gerais</h2>
@@ -328,7 +347,7 @@ function renderSettings() {
       ${card('Intervalo de atualização', 'Com que frequência a bateria e a conexão são lidas.',
         `<select class="sel" id="set-poll">${[1000, 3000, 5000, 10000].map((v) => `<option value="${v}" ${v === state.pollMs ? 'selected' : ''}>${v / 1000} s</option>`).join('')}</select>`)}
       ${p ? card('Fechar para a bandeja', 'O botão fechar esconde a janela; o app segue avisando sobre a bateria.', prefSwitch('closeToTray'))
-        + card('Iniciar com o sistema', 'Abre minimizado na bandeja ao entrar na sessão.', prefSwitch('autostart')) : ''}`;
+        + (state.flatpak ? '' : card('Iniciar com o sistema', 'Abre minimizado na bandeja ao entrar na sessão.', prefSwitch('autostart'))) : ''}`;
   }
   return `<div class="settings-page">
     <nav class="set-nav">${SET_TABS.map(([id, ic, label]) => `<button class="${id === tab ? 'on' : ''}" data-set-tab="${id}">${icon(ic)}${label}</button>`).join('')}</nav>
@@ -504,6 +523,8 @@ function render(force = false) {
   const t = $('#seg-tester'); if (t) t.onclick = () => go('tester');
   for (const b of document.querySelectorAll('[data-home-view]')) b.onclick = () => { state.homeView = b.dataset.homeView; store.set('homeView', state.homeView); lastHtml = ''; render(true); };
   const ts = $('#set-tester'); if (ts) ts.onclick = () => go('tester');
+  const cu = $('#copy-udev');
+  if (cu) cu.onclick = () => navigator.clipboard.writeText(UDEV_CMD).then(() => toast('Comando copiado'), () => toast('Não foi possível copiar', true));
   bindSettings();
   if (screenChanged) animateIn(view.firstElementChild, state.view === 'home' ? 'anim-home' : 'anim-page');
   lastViewKey = viewKey;
@@ -572,5 +593,6 @@ function bindSettings() {
 applyTheme();
 render(true);
 window.mhub?.getPrefs?.().then((p) => { state.prefs = p; if (state.view === 'settings') render(true); }).catch(() => {});
+window.mhub?.env?.().then((e) => { state.flatpak = !!e?.flatpak; render(true); }).catch(() => {});
 rescan();
 schedule();

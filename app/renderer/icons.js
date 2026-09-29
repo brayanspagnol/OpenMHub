@@ -45,4 +45,3 @@ export function batteryIcon(pct, charging) {
   return `<svg class="i" viewBox="0 0 24 24"><rect x="7" y="4.5" width="10" height="16.5" rx="1.8"/><path d="M10 2.5h4"/>${fill}</svg>`;
 }
 
-export const MCHOSE_LOGO = '<svg class="logo-k" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 3h5.2L5.9 12l7.8 9H8.5L.7 12z"/><path d="M16.2 3h5.2l-6.6 7.6-2.6-3z"/><path d="M12.2 16.4l2.6-3L21.4 21h-5.2z"/></svg>';

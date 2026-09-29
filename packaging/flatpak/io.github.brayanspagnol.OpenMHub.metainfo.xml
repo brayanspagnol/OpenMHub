@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.brayanspagnol.OpenMHub</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>OpenMHub</name>
+  <summary>Configure MCHOSE mice and keyboards</summary>
+
+  <developer id="io.github.brayanspagnol">
+    <name>Brayan Spagnol</name>
+  </developer>
+
+  <description>
+    <p>
+      OpenMHub is an unofficial configurator for MCHOSE mice and keyboards. It shows the battery level, charging state and connection mode of each device, and changes the settings stored on supported devices.
+    </p>
+    <p>
+      OpenMHub is a community project and is not affiliated with or endorsed by MCHOSE. Firmware updates are not supported; use the official software for those.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Battery, charging and connection mode (cable or 2.4G receiver) for every recognised device</li>
+      <li>Mouse buttons, DPI stages, polling rate, debounce, lift-off distance, sleep timer and macros</li>
+      <li>Keyboard lighting effects, per-key colour, key remapping on three layers and macros</li>
+      <li>Up to six local profiles per device, with JSON export and import</li>
+      <li>Keyboard and mouse test tools</li>
+      <li>Tray icon and low-battery notifications</li>
+    </ul>
+    <p>
+      Access to the devices needs a udev rule installed once on the host, outside the sandbox. The rule and the instructions are in the project repository.
+    </p>
+    <p>
+      The interface is currently in Brazilian Portuguese.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.brayanspagnol.OpenMHub.desktop</launchable>
+
+  <url type="homepage">https://github.com/brayanspagnol/OpenMHub</url>
+  <url type="bugtracker">https://github.com/brayanspagnol/OpenMHub/issues</url>
+  <url type="vcs-browser">https://github.com/brayanspagnol/OpenMHub</url>
+
+  <content_rating type="oars-1.1"/>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#b9d1ff</color>
+    <color type="primary" scheme_preference="dark">#0b2e6e</color>
+  </branding>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/home.png</image>
+      <caption>Connected devices with their battery and connection mode</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-overview.png</image>
+      <caption>Device overview</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-dpi.png</image>
+      <caption>Mouse DPI stages</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/mouse-performance.png</image>
+      <caption>Polling rate, debounce and other mouse settings</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.2.0/docs/screenshots/keyboard-keymap.png</image>
+      <caption>Keyboard key remapping</caption>
+    </screenshot>
+  </screenshots>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <provides>
+    <binary>openmhub</binary>
+    <modalias>usb:v3837p*</modalias>
+    <modalias>usb:v41E4p*</modalias>
+  </provides>
+
+  <categories>
+    <category>Settings</category>
+    <category>HardwareSettings</category>
+  </categories>
+
+  <keywords>
+    <keyword>MCHOSE</keyword>
+    <keyword>mouse</keyword>
+    <keyword>keyboard</keyword>
+    <keyword>DPI</keyword>
+    <keyword>battery</keyword>
+  </keywords>
+
+  <releases>
+    <release version="0.2.0" date="2026-09-29">
+      <description>
+        <p>Renamed to OpenMHub and packaged for Flatpak.</p>
+        <ul>
+          <li>Product pictures are downloaded on demand from MCHOSE's public CDN instead of being bundled</li>
+          <li>Flatpak build with the tray, notifications and device access working inside the sandbox</li>
+        </ul>
+      </description>
+    </release>
+    <release version="0.1.0" date="2026-09-29">
+      <description>
+        <p>First public release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

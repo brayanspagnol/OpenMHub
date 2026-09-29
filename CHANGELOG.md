@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-29
+
+### Changed
+
+- Renamed to OpenMHub, with a new icon and titlebar that no longer use the MCHOSE logo, and a clearer "unofficial" note in Settings > Sobre. The launcher, preferences folder and window class stay `mhub-linux`.
+- Product pictures are no longer bundled: they are downloaded from MCHOSE's CDN when first shown and cached in `~/.config/mhub-linux/device-images`. Offline, the generic icon is shown.
+
+### Added
+
+- Flatpak support: the app detects the sandbox, hides "Iniciar com o sistema" and shows the udev command to run on the host when no device is found.
+
 ## [0.1.0] - 2026-09-29
 
 First public release.
@@ -21,5 +32,6 @@ First public release.
 - Tray icon, low-battery and full-charge notifications, DPI and lock-key notifications, start with the system.
 - Graphical installer (`MHUB-Linux-Installer.run`), Arch package, and a udev rule so the app runs without root.
 
-[Unreleased]: https://github.com/OWNER/mhub-linux/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/OWNER/mhub-linux/releases/tag/v0.1.0
+[Unreleased]: https://github.com/brayanspagnol/OpenMHub/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/brayanspagnol/OpenMHub/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/brayanspagnol/OpenMHub/releases/tag/v0.1.0

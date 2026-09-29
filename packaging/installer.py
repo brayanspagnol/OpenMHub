@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Instalador gráfico (GTK4) do M HUB Linux. Não instala nada sozinho: roda install.sh --machine
+# Instalador gráfico (GTK4) do OpenMHub. Não instala nada sozinho: roda install.sh --machine
 # e mostra os passos que ele informa em linhas "@@step <id> <estado> <texto>".
 #
 # Testes: installer.py --auto [--uninstall] [--autostart|--no-autostart] [--shot arquivo.png]
@@ -30,7 +30,7 @@ INSTALL_STEPS = [
     ('done', 'Pronto'),
 ]
 UNINSTALL_STEPS = [
-    ('stop', 'Fechar o M HUB Linux'),
+    ('stop', 'Fechar o OpenMHub'),
     ('files', 'Remover o app, o atalho e os ícones'),
     ('autostart', 'Remover o início automático'),
     ('done', 'Pronto'),
@@ -182,7 +182,7 @@ class Installer(Gtk.Application):
 
         self.st = status()
         self.installed = self.st.get('installed') == '1'
-        self.win = Gtk.ApplicationWindow(application=self, title='Instalar M HUB Linux')
+        self.win = Gtk.ApplicationWindow(application=self, title='Instalar OpenMHub')
         self.win.add_css_class('mhub')
         self.win.set_default_size(480, -1)
         self.win.set_resizable(False)
@@ -201,11 +201,11 @@ class Installer(Gtk.Application):
         icon.set_can_shrink(True)
         top.append(icon)
         titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, valign=Gtk.Align.CENTER, spacing=2)
-        title = Gtk.Label(label='M HUB Linux', xalign=0)
+        title = Gtk.Label(label='OpenMHub', xalign=0)
         title.add_css_class('title')
         titles.append(title)
         version = self.st.get('version', '')
-        self.base_subtitle = sub = f'Versão {version} · configurador dos periféricos MCHOSE'
+        self.base_subtitle = sub = f'Versão {version} · configurador não oficial dos periféricos MCHOSE'
         if self.installed:
             sub += f"\nJá instalado (versão {self.st.get('installed_version', '?')})"
         self.subtitle = Gtk.Label(label=sub, xalign=0)
@@ -298,7 +298,7 @@ class Installer(Gtk.Application):
             self.quit()
 
     def confirm_uninstall(self):
-        dialog = Gtk.AlertDialog(message='Desinstalar o M HUB Linux?',
+        dialog = Gtk.AlertDialog(message='Desinstalar o OpenMHub?',
                                  detail='O app, o atalho e o início automático serão removidos. '
                                         'A regra udev e as preferências ficam.',
                                  buttons=['Cancelar', 'Desinstalar'], cancel_button=0, default_button=1)
@@ -373,19 +373,19 @@ class Installer(Gtk.Application):
         elif self.uninstalling:
             self.phase = 'removed'
             self.subtitle.set_label(self.base_subtitle)
-            self.rows['done'].set_state('ok', 'O M HUB Linux foi removido.')
+            self.rows['done'].set_state('ok', 'O OpenMHub foi removido.')
             self.primary.set_label('Fechar')
             self.secondary.set_visible(False)
             self.autostart.set_visible(False)
         else:
             self.phase = 'installed'
             self.subtitle.set_label(f"{self.base_subtitle}\nInstalado em {self.st.get('dest', '').replace(os.path.expanduser('~'), '~', 1)}")
-            detail = 'Abra "M HUB Linux" no menu de aplicativos.'
+            detail = 'Abra "OpenMHub" no menu de aplicativos.'
             if self.failed:
                 detail = 'Instalado com avisos: veja os detalhes. ' + detail
                 self.expander.set_expanded(True)
             self.rows['done'].set_state('ok', detail)
-            self.primary.set_label('Abrir M HUB')
+            self.primary.set_label('Abrir OpenMHub')
             self.secondary.set_label('Fechar')
             self.secondary.remove_css_class('danger')
         if self.auto:
