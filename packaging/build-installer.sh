@@ -12,7 +12,7 @@ tmp="$(mktemp -d "${TMPDIR:-/tmp}/mhub-build.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$dist"
 
-echo "==> M HUB Linux $version"
+echo "==> OpenMHub $version"
 bash -n "$root/install.sh"
 
 # ---------- Instalador .run ----------
@@ -28,7 +28,7 @@ find "$payload" -name '__pycache__' -prune -exec rm -rf {} +
 run="$dist/MHUB-Linux-Installer.run"
 cat > "$tmp/header.sh" <<HEADER
 #!/bin/sh
-# M HUB Linux $version: instalador de arquivo único.
+# OpenMHub $version: instalador de arquivo único.
 #   sh MHUB-Linux-Installer.run               abre o instalador gráfico (ou pergunta no terminal)
 #   sh MHUB-Linux-Installer.run --terminal    instala pelo terminal
 #   sh MHUB-Linux-Installer.run --yes         instala sem perguntar

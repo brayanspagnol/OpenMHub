@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=OpenMHub
+GenericName=Peripheral Configurator
+GenericName[pt_BR]=Configurador de periféricos
+Comment=Configure MCHOSE mice and keyboards
+Comment[pt_BR]=Bateria, conexão e configurações dos periféricos MCHOSE
+Exec=openmhub
+Icon=io.github.brayanspagnol.OpenMHub
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=MCHOSE;mouse;keyboard;battery;DPI;RGB;HID;
+Keywords[pt_BR]=MCHOSE;mouse;teclado;bateria;DPI;RGB;HID;
+StartupWMClass=io.github.brayanspagnol.OpenMHub
+StartupNotify=true

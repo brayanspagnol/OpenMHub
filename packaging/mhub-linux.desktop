@@ -1,12 +1,15 @@
 [Desktop Entry]
 Type=Application
-Name=M HUB Linux
-GenericName=Configurador de periféricos
-Comment=Bateria, conexão e configurações dos periféricos MCHOSE
+Name=OpenMHub
+GenericName=Peripheral configurator
+GenericName[pt_BR]=Configurador de periféricos
+Comment=Unofficial configurator for MCHOSE mice and keyboards
+Comment[pt_BR]=Configurador não oficial para mouses e teclados MCHOSE
 Exec=mhub-linux
 Icon=mhub-linux
 Terminal=false
 Categories=Utility;Settings;HardwareSettings;
-Keywords=MCHOSE;mouse;teclado;bateria;HID;
+Keywords=OpenMHub;MCHOSE;mouse;keyboard;battery;HID;
+Keywords[pt_BR]=OpenMHub;MCHOSE;mouse;teclado;bateria;HID;
 StartupWMClass=mhub-linux
 StartupNotify=true

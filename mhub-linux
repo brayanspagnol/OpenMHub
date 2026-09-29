@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Abre o M HUB Linux a partir do repositório. ELECTRON_RUN_AS_NODE vem de terminais do VS Code e impede a janela de abrir.
+# Abre o OpenMHub a partir do repositório. ELECTRON_RUN_AS_NODE vem de terminais do VS Code e impede a janela de abrir.
 here="$(dirname "$(readlink -f "$0")")"
 export MHUB_LAUNCHER="$here/mhub-linux"
 exec env -u ELECTRON_RUN_AS_NODE electron42 "$here/app" "$@"

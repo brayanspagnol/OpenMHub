@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Download the official MCHOSE product pictures used by M HUB and build the device catalog.
+"""Build the device catalog from the product pictures used by MCHOSE's M HUB.
 
 M HUB (the official app, also served at https://www.mchose.com.cn) decides which picture to show
 for a device from its HID product name (and, for the magnetic keyboards, from its VID/PID). This
 script reads that mapping from M HUB's own web bundle and from its remote config
-(configCenter/custom/cardList.json), downloads every picture, converts it to WebP and writes:
+(configCenter/custom/cardList.json) and writes:
 
-  app/renderer/assets/devices/<kind>/<model>-<colour>-card.webp   picture used on the home card
-  app/renderer/assets/devices/<kind>/<model>-<colour>-top.webp    keyboard seen from above (key map)
-  app/renderer/assets/devices/swatches/*.webp                     colour dots that are pictures
-  app/renderer/data/device-catalog.js                             the mapping, read by device-images.js
+  app/renderer/data/device-catalog.js       the mapping with the pictures' CDN URLs, read by device-images.js
+  app/renderer/assets/devices/generic/*     generic mouse/keyboard/receiver icons (bundled fallback)
+
+The product pictures themselves are not bundled: the app downloads them from cdn.mchose.com.cn
+on first use and caches them (see the mhub-img protocol in app/main.js).
 
 Run it with:  uv run --with pillow tools/fetch-device-assets.py
-It only needs network access to mchose.com.cn. Downloads are cached in ~/.cache/mhub-linux-assets;
+It only needs network access to mchose.com.cn. Downloads (used to check the pictures and pick
+colour dots) are cached in ~/.cache/mhub-linux-assets;
 delete that folder to fetch everything again.
 """
 import base64
@@ -36,10 +38,6 @@ OUT_JS = RENDERER / 'data' / 'device-catalog.js'
 CACHE = Path.home() / '.cache' / 'mhub-linux-assets'
 SITE = 'https://www.mchose.com.cn'
 CDN = 'https://cdn.mchose.com.cn/configCenter'
-
-# Largest size kept for each picture (the app shows them at about half of this, so HiDPI stays sharp).
-MAX_CARD = {'mouse': (1000, 1000), 'keyboard': (760, 420), 'headset': (800, 800)}
-MAX_TOP = (1400, 520)
 
 
 def fetch(url):
@@ -260,7 +258,7 @@ def save_picture(url, dest, box):
     if url in saved:
         return saved[url]
     rel = dest.relative_to(RENDERER).as_posix()
-    if dest.exists():  # already converted by an earlier run (delete assets/devices to redo them)
+    if dest.exists():  # already converted by an earlier run (delete assets/devices/generic to redo them)
         saved[url] = rel
         return rel
     im = Image.open(io.BytesIO(fetch(url)))
@@ -323,7 +321,6 @@ def build():
             models.append({'kind': 'headset', 'names': group['names'], 'colors': group['colors']})
 
     urls = [u for m in models for c in m['colors'] for u in (c['card'], c.get('top')) if u]
-    urls += [re.search(r'url\(([^)]+)\)', v).group(1).strip('\'"') for v in swatches.values() if 'url(' in v]
     print(f'{len(models)} models, downloading {len(set(urls))} pictures...', flush=True)
     prefetch(urls)
 
@@ -333,15 +330,12 @@ def build():
         colors = []
         for c in m['colors']:
             cs = slug(re.sub(r'^(k7-)?color-', '', c['color']))
-            card = save_picture(c['card'] or c['top'], OUT_IMG / m['kind'] / f'{model_slug}-{cs}-card.webp', MAX_CARD[m['kind']])
-            top = save_picture(c['top'], OUT_IMG / m['kind'] / f'{model_slug}-{cs}-top.webp', MAX_TOP) if c.get('top') else None
+            card = c['card'] or c['top']
+            top = c.get('top')
             sw = swatches.get(c['color'])
             if sw and 'url(' in sw:
                 u = re.search(r'url\(([^)]+)\)', sw).group(1).strip('\'"')
-                if u.endswith('.svg'):
-                    sw = average_color(c['card'] or c['top'])
-                else:
-                    sw = f"url({save_picture(u, OUT_IMG / 'swatches' / (slug(c['color']) + '.webp'), (48, 48))})"
+                sw = average_color(card) if u.endswith('.svg') else f'url({u})'
             colors.append({'id': cs, 'label': color_label(c['color']), 'dot': sw or average_color(c['card'] or c['top']),
                            'card': card, **({'top': top} if top else {})})
         entry = {'kind': m['kind'], 'names': m['names']}
@@ -365,7 +359,7 @@ def build():
     body = 'export const GENERIC = ' + json.dumps(generic, ensure_ascii=False) + ';\n\n'
     body += 'export default [\n' + ',\n'.join('  ' + json.dumps(e, ensure_ascii=False) for e in catalog) + ',\n];\n'
     OUT_JS.write_text(header + '\n' + body)
-    print(f'{len(catalog)} models, {len(saved)} pictures -> {OUT_IMG.relative_to(ROOT)}, catalog -> {OUT_JS.relative_to(ROOT)}')
+    print(f'{len(catalog)} models, generic icons -> {OUT_IMG.relative_to(ROOT)}, catalog -> {OUT_JS.relative_to(ROOT)}')
 
 
 if __name__ == '__main__':

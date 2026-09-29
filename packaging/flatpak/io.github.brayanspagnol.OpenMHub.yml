@@ -1,0 +1,78 @@
+id: io.github.brayanspagnol.OpenMHub
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '26.08'
+command: openmhub
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  # WebHID talks to the mice and keyboards through /dev/hidraw*. Flatpak has no
+  # narrower permission for hidraw nodes (--device=usb only covers
+  # /dev/bus/usb), so --device=all is the only way to reach them. It also
+  # covers GPU access (/dev/dri).
+  - --device=all
+  # Product pictures are downloaded on demand from MCHOSE's public CDN
+  # (cdn.mchose.com.cn).
+  - --share=network
+  # Tray icon with each device's battery (StatusNotifierItem).
+  - --talk-name=org.kde.StatusNotifierWatcher
+
+modules:
+  - name: openmhub
+    buildsystem: simple
+    build-commands:
+      - cp -a electron /app/openmhub
+      - rm -f /app/openmhub/resources/default_app.asar
+      - cp -a src/app /app/openmhub/resources/app
+      - install -Dm755 openmhub.sh /app/bin/openmhub
+      - install -Dm644 src/packaging/flatpak/${FLATPAK_ID}.desktop -t /app/share/applications
+      - install -Dm644 src/packaging/flatpak/${FLATPAK_ID}.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 src/app/assets/icon.svg /app/share/icons/hicolor/scalable/apps/${FLATPAK_ID}.svg
+      - install -Dm644 src/app/assets/icon-256.png /app/share/icons/hicolor/256x256/apps/${FLATPAK_ID}.png
+      - install -Dm644 src/app/assets/icon-512.png /app/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
+      - install -Dm644 src/LICENSE -t /app/share/licenses/${FLATPAK_ID}
+    sources:
+      - type: archive
+        only-arches: [x86_64]
+        url: https://github.com/electron/electron/releases/download/v42.11.8/electron-v42.11.8-linux-x64.zip
+        sha256: 2bb665f0884f4ce6b7eb4fa7e23435616458e61c6548c9bfcc69816126684e83
+        strip-components: 0
+        dest: electron
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/electron/electron/releases?per_page=100
+          version-query: '[.[] | select(.prerelease | not) | select(.tag_name | test("^v42\\."))] | first | .tag_name | ltrimstr("v")'
+          url-query: '"https://github.com/electron/electron/releases/download/v\($version)/electron-v\($version)-linux-x64.zip"'
+
+      - type: archive
+        only-arches: [aarch64]
+        url: https://github.com/electron/electron/releases/download/v42.11.8/electron-v42.11.8-linux-arm64.zip
+        sha256: 5bd33d00b85a6b88addab325f89cf0072d0be3986d803ec774a16c7b0b8662df
+        strip-components: 0
+        dest: electron
+        x-checker-data:
+          type: json
+          url: https://api.github.com/repos/electron/electron/releases?per_page=100
+          version-query: '[.[] | select(.prerelease | not) | select(.tag_name | test("^v42\\."))] | first | .tag_name | ltrimstr("v")'
+          url-query: '"https://github.com/electron/electron/releases/download/v\($version)/electron-v\($version)-linux-arm64.zip"'
+
+      # BEGIN app-source (CI swaps this block for the checked-out tree)
+      - type: git
+        url: https://github.com/brayanspagnol/OpenMHub.git
+        tag: v0.2.0
+        # commit: filled by packaging/flatpak/update-commit.sh after tagging
+        dest: src
+        x-checker-data:
+          type: git
+          tag-pattern: ^v([\d.]+)$
+      # END app-source
+
+      - type: script
+        dest-filename: openmhub.sh
+        commands:
+          - exec zypak-wrapper /app/openmhub/electron "$@"

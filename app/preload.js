@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('mhub', {
   getPrefs: () => ipcRenderer.invoke('prefs:get'),
   setPref: (key, value) => ipcRenderer.invoke('prefs:set', key, value).then(() => undefined),
   version: () => ipcRenderer.invoke('version'),
+  // { flatpak }: o que muda quando o app roda no Flatpak.
+  env: () => ipcRenderer.invoke('env'),
   // Notificação na área de trabalho. opts: { tag, silent, urgency }. Mesmo tag substitui a anterior;
   // tag 'dpi' é ignorada quando a preferência dpiNotify está desligada.
   notify: (title, body, opts) => ipcRenderer.send('notify', String(title ?? ''), String(body ?? ''),

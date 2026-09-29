@@ -1,0 +1,78 @@
+name: Flatpak
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+env:
+  APP_ID: io.github.brayanspagnol.OpenMHub
+  MANIFEST: packaging/flatpak/io.github.brayanspagnol.OpenMHub.yml
+  CI_MANIFEST: packaging/flatpak/io.github.brayanspagnol.OpenMHub.ci.yml
+
+jobs:
+  build:
+    name: Build (${{ matrix.variant.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.variant.runner }}
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      # The manifest builds the release tag from GitHub. CI builds the
+      # checked-out tree instead, so the app-source block becomes a dir source.
+      - name: Point the manifest at the checkout
+        run: |
+          awk '
+            /# BEGIN app-source/ {
+              print
+              print "      - type: dir"
+              print "        path: ../.."
+              print "        dest: src"
+              print "        skip: [.git, .flatpak-builder, flatpak_app, repo]"
+              skip = 1; next
+            }
+            /# END app-source/ { skip = 0 }
+            !skip
+          ' "$MANIFEST" > "$CI_MANIFEST"
+          grep -q 'type: dir' "$CI_MANIFEST"
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: ${{ env.CI_MANIFEST }}
+          bundle: OpenMHub-${{ matrix.variant.arch }}.flatpak
+          artifact-name: OpenMHub-${{ matrix.variant.arch }}.flatpak
+          arch: ${{ matrix.variant.arch }}
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-26.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install flatpak-builder-lint
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
+
+      - name: Lint the manifest
+        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest "$MANIFEST"
+
+      # Screenshot URLs point at the release tag, so this step only passes
+      # once that tag is pushed.
+      - name: Lint the metainfo
+        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream "packaging/flatpak/$APP_ID.metainfo.xml"
