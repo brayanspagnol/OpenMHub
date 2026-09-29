@@ -13,10 +13,10 @@
 
   <description>
     <p>
-      OpenMHub is an unofficial configurator for MCHOSE mice and keyboards. It shows the battery level, charging state and connection mode of each device, and changes the settings stored on supported devices.
+      OpenMHub is an unofficial configurator for MCHOSE devices.
     </p>
     <p>
-      OpenMHub is a community project and is not affiliated with or endorsed by MCHOSE. Firmware updates are not supported; use the official software for those.
+      OpenMHub is an open-source project and is not affiliated with or endorsed by MCHOSE. Firmware updates are not supported; use the official software for those.
     </p>
     <p>Features:</p>
     <ul>
@@ -31,7 +31,7 @@
       Access to the devices needs a udev rule installed once on the host, outside the sandbox. The rule and the instructions are in the project repository.
     </p>
     <p>
-      The interface is currently in Brazilian Portuguese.
+      The interface is available in English, Spanish, French and Brazilian Portuguese. The language can be changed in the settings.
     </p>
   </description>
 
@@ -50,23 +50,23 @@
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/home.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.1/docs/screenshots/home.png</image>
       <caption>Connected devices with their battery and connection mode</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-overview.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.1/docs/screenshots/mouse-overview.png</image>
       <caption>Device overview</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-dpi.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.1/docs/screenshots/mouse-dpi.png</image>
       <caption>Mouse DPI stages</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/mouse-performance.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.1/docs/screenshots/mouse-performance.png</image>
       <caption>Polling rate, debounce and other mouse settings</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.0/docs/screenshots/keyboard-keymap.png</image>
+      <image>https://raw.githubusercontent.com/brayanspagnol/OpenMHub/v0.3.1/docs/screenshots/keyboard-keymap.png</image>
       <caption>Keyboard key remapping</caption>
     </screenshot>
   </screenshots>
@@ -99,6 +99,11 @@
   </keywords>
 
   <releases>
+    <release version="0.3.1" date="2026-09-29">
+      <description>
+        <p>Spanish and French interface.</p>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-09-29">
       <description>
         <p>Complete English interface, with a language setting.</p>
@@ -108,7 +113,6 @@
       <description>
         <p>Renamed to OpenMHub and packaged for Flatpak.</p>
         <ul>
-          <li>Product pictures are downloaded on demand from MCHOSE's public CDN instead of being bundled</li>
           <li>Flatpak build with the tray, notifications and device access working inside the sandbox</li>
         </ul>
       </description>

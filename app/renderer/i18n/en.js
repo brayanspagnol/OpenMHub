@@ -133,6 +133,7 @@ export default {
   'ov.mouseSleeps': 'Mouse sleeps when idle',
   'ov.kbSleeps': 'Keyboard sleeps when idle',
   'ov.neverSleeps': 'Never sleeps',
+  'ov.debounce': 'Debounce',
   'ov.debounceLow': 'Very low: risk of double clicks',
   'ov.debounceOk': 'Double-click protection',
   'ov.reversed': 'Reversed scrolling',
@@ -152,6 +153,8 @@ export default {
 
   // Mouse
   'mouse.exp': 'The official M HUB hides this option on the G3 V2. It may have no effect.',
+  'mouse.expBadge': 'Experimental',
+  'mouse.btnTitle': '{btn}: {fn}',
   'mb.left': 'Left button',
   'mb.right': 'Right button',
   'mb.middle': 'Middle button',

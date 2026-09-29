@@ -348,7 +348,7 @@ function renderSettings() {
       ${card(t('set.firmware'), t('set.firmwareDesc'), '')}`;
   } else {
     const pref = langPref();
-    const langs = [['auto', t('set.langAuto')], ['en', 'English'], ['pt-BR', 'Português (Brasil)']];
+    const langs = [['auto', t('set.langAuto')], ['en', 'English'], ['es', 'Español'], ['fr', 'Français'], ['pt-BR', 'Português (Brasil)']];
     body = `<h2>${t('set.generalTitle')}</h2>
       ${card(t('set.lang'), t('set.langDesc'),
         `<select class="sel" id="set-lang">${langs.map(([v, label]) => `<option value="${v}" ${v === pref ? 'selected' : ''}>${label}</option>`).join('')}</select>`)}

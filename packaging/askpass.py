@@ -15,23 +15,32 @@ def system_lang():
     return ''
 
 
-PT = system_lang().lower().startswith('pt')
-prompt = sys.argv[1] if len(sys.argv) > 1 else ('Senha:' if PT else 'Password:')
+LANG = system_lang().lower()[:2]
+
+
+def _(pt, en, es, fr):
+    return {'pt': pt, 'es': es, 'fr': fr}.get(LANG, en)
+
+
+prompt = sys.argv[1] if len(sys.argv) > 1 else _('Senha:', 'Password:', 'Contraseña:', 'Mot de passe :')
 # O instalador diz o motivo em MHUB_ASKPASS_REASON (já no idioma do sistema).
-reason = os.environ.get('MHUB_ASKPASS_REASON', 'copiar a regra udev para /etc/udev/rules.d' if PT
-                        else 'copy the udev rule to /etc/udev/rules.d')
+reason = os.environ.get('MHUB_ASKPASS_REASON', _('copiar a regra udev para /etc/udev/rules.d', 'copy the udev rule to /etc/udev/rules.d',
+                                                  'copiar la regla udev a /etc/udev/rules.d', 'copier la règle udev dans /etc/udev/rules.d'))
 result = {'pw': None}
 
 
 def on_activate(app):
-    win = Gtk.ApplicationWindow(application=app, title='OpenMHub: senha de administrador' if PT else 'OpenMHub: administrator password')
+    win = Gtk.ApplicationWindow(application=app, title=_('OpenMHub: senha de administrador', 'OpenMHub: administrator password',
+                                                          'OpenMHub: contraseña de administrador', 'OpenMHub : mot de passe administrateur'))
     win.set_default_size(420, -1)
     win.set_resizable(False)
     box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
     for side in ('top', 'bottom', 'start', 'end'):
         getattr(box, f'set_margin_{side}')(18)
-    info = Gtk.Label(label=f'O instalador precisa de permissão de administrador para {reason}.' if PT
-                     else f'The installer needs administrator permission to {reason}.',
+    info = Gtk.Label(label=_(f'O instalador precisa de permissão de administrador para {reason}.',
+                             f'The installer needs administrator permission to {reason}.',
+                             f'El instalador necesita permisos de administrador para {reason}.',
+                             f'L’installateur a besoin des droits d’administrateur pour {reason}.'),
                      wrap=True, xalign=0)
     box.append(info)
     box.append(Gtk.Label(label=prompt, xalign=0))
@@ -39,7 +48,7 @@ def on_activate(app):
     entry.set_show_peek_icon(True)
     box.append(entry)
     buttons = Gtk.Box(spacing=8, halign=Gtk.Align.END)
-    cancel = Gtk.Button(label='Cancelar' if PT else 'Cancel')
+    cancel = Gtk.Button(label=_('Cancelar', 'Cancel', 'Cancelar', 'Annuler'))
     ok = Gtk.Button(label='OK')
     ok.add_css_class('suggested-action')
     buttons.append(cancel)

@@ -1,13 +1,15 @@
 // Idioma da interface: preferência salva (Configurações > Geral) ou o idioma do sistema.
-// pt* vira pt-BR; o resto, inglês. Inglês também cobre chaves que faltem no outro dicionário.
+// es* vira es, fr* vira fr, pt* vira pt-BR; o resto, inglês. Inglês também cobre chaves que faltem no outro dicionário.
 // O idioma vale para a página inteira: trocar grava a preferência e recarrega.
 import en from './i18n/en.js';
 import ptBR from './i18n/pt-BR.js';
+import es from './i18n/es.js';
+import fr from './i18n/fr.js';
 
-const DICTS = { en, 'pt-BR': ptBR };
-export const LANGS = ['en', 'pt-BR'];
+const DICTS = { en, 'pt-BR': ptBR, es, fr };
+export const LANGS = Object.keys(DICTS);
 
-// 'auto' | 'en' | 'pt-BR' (guardado como JSON, igual às outras chaves do app).
+// 'auto' | 'en' | 'pt-BR' | 'es' | 'fr' (guardado como JSON, igual às outras chaves do app).
 export function langPref() {
   try {
     const v = JSON.parse(localStorage.getItem('lang'));
@@ -15,7 +17,11 @@ export function langPref() {
   } catch { return 'auto'; }
 }
 
-export const resolveLang = (pref) => (LANGS.includes(pref) ? pref : /^pt/i.test(navigator.language || '') ? 'pt-BR' : 'en');
+export const resolveLang = (pref) => {
+  if (LANGS.includes(pref)) return pref;
+  const sys = (navigator.language || '').toLowerCase();
+  return sys.startsWith('pt') ? 'pt-BR' : sys.startsWith('es') ? 'es' : sys.startsWith('fr') ? 'fr' : 'en';
+};
 
 export const lang = resolveLang(langPref());
 document.documentElement.lang = lang;

@@ -133,6 +133,7 @@ export default {
   'ov.mouseSleeps': 'Sem uso, o mouse dorme',
   'ov.kbSleeps': 'Sem uso, o teclado dorme',
   'ov.neverSleeps': 'Nunca dorme',
+  'ov.debounce': 'Debounce',
   'ov.debounceLow': 'Muito baixo: risco de clique duplo',
   'ov.debounceOk': 'Proteção contra clique duplo',
   'ov.reversed': 'Rolagem invertida',
@@ -152,6 +153,8 @@ export default {
 
   // Mouse
   'mouse.exp': 'O M HUB oficial não mostra esta opção para o G3 V2. Pode não ter efeito.',
+  'mouse.expBadge': 'Experimental',
+  'mouse.btnTitle': '{btn}: {fn}',
   'mb.left': 'Botão esquerdo',
   'mb.right': 'Botão direito',
   'mb.middle': 'Botão do meio',

@@ -19,7 +19,7 @@ function mouseFig(ctx, h) {
 }
 
 // O M HUB esconde estas opções no G3 V2 (não Pro): o firmware aceita, mas o efeito não é garantido.
-const EXP = ` <span class="exp" title="${t('mouse.exp')}">Experimental</span>`;
+const EXP = ` <span class="exp" title="${t('mouse.exp')}">${t('mouse.expBadge')}</span>`;
 
 // y = centro da etiqueta, em fração da altura da foto (a figura muda de tamanho com a janela).
 // tx/ty: ponto do botão na foto (fração da largura/altura), medido no M HUB oficial.
@@ -247,7 +247,7 @@ function keymapPane(ctx) {
     <div class="kmouse">
       <div class="kfig">
         ${mouseFig(ctx, null)}
-        ${BUTTONS.map((b, i) => { const val = esc(keyName(keys[i], drv)); return `<button class="kchip ${b.side} ${i === sel ? 'on' : ''}" style="top:${b.y * 100}%" data-act="key-sel" data-i="${i}" title="${b.label}: ${val}">
+        ${BUTTONS.map((b, i) => { const val = esc(keyName(keys[i], drv)); return `<button class="kchip ${b.side} ${i === sel ? 'on' : ''}" style="top:${b.y * 100}%" data-act="key-sel" data-i="${i}" title="${t('mouse.btnTitle', { btn: b.label, fn: val })}">
           <span class="kchip-val">${val}</span><i class="lead"></i></button>`; }).join('')}
       </div>
       <button class="btn-ghost" data-act="keys-reset">${icon('undo')}${t('common.restoreDefaults')}</button>
