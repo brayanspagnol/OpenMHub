@@ -70,9 +70,9 @@ jobs:
           flatpak install --user -y --noninteractive flathub org.flatpak.Builder
 
       - name: Lint the manifest
-        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest "$MANIFEST"
+        run: flatpak run --filesystem="$PWD" --command=flatpak-builder-lint org.flatpak.Builder manifest "$MANIFEST"
 
       # Screenshot URLs point at the release tag, so this step only passes
       # once that tag is pushed.
       - name: Lint the metainfo
-        run: flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream "packaging/flatpak/$APP_ID.metainfo.xml"
+        run: flatpak run --filesystem="$PWD" --command=flatpak-builder-lint org.flatpak.Builder appstream "packaging/flatpak/$APP_ID.metainfo.xml"
