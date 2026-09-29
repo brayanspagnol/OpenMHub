@@ -1,0 +1,37 @@
+# Maintainer: Brayan Spagnol <brayanspagnol at users dot noreply dot github dot com>
+pkgname=openmhub
+pkgver=0.2.0
+pkgrel=1
+pkgdesc='Unofficial configurator for MCHOSE mice and keyboards (battery, DPI, lighting, macros)'
+arch=('any')
+url='https://github.com/brayanspagnol/OpenMHub'
+license=('MIT')
+depends=('electron42')
+provides=('mhub-linux')
+conflicts=('mhub-linux')
+install=openmhub.install
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('521340193b11b4f80307fd779fa977dac77d621a540e506611602804102e6d03')
+
+package() {
+  cd "OpenMHub-$pkgver"
+  install -d "$pkgdir/usr/lib/mhub-linux"
+  cp -r app "$pkgdir/usr/lib/mhub-linux/app"
+  find "$pkgdir/usr/lib/mhub-linux" -type f -exec chmod 644 {} +
+
+  install -d "$pkgdir/usr/bin"
+  cat > "$pkgdir/usr/bin/mhub-linux" <<'LAUNCHER'
+#!/usr/bin/env bash
+export MHUB_LAUNCHER=/usr/bin/mhub-linux
+exec env -u ELECTRON_RUN_AS_NODE electron42 /usr/lib/mhub-linux/app "$@"
+LAUNCHER
+  chmod 755 "$pkgdir/usr/bin/mhub-linux"
+  ln -s mhub-linux "$pkgdir/usr/bin/openmhub"
+
+  install -Dm644 packaging/mhub-linux.desktop "$pkgdir/usr/share/applications/mhub-linux.desktop"
+  install -Dm644 app/assets/icon-256.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/mhub-linux.png"
+  install -Dm644 app/assets/icon-512.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/mhub-linux.png"
+  install -Dm644 app/assets/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/mhub-linux.svg"
+  install -Dm644 udev/70-mhub-linux.rules "$pkgdir/usr/lib/udev/rules.d/70-mhub-linux.rules"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
