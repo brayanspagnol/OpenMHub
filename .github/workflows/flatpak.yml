@@ -70,9 +70,14 @@ jobs:
           flatpak install --user -y --noninteractive flathub org.flatpak.Builder
 
       - name: Lint the manifest
-        run: flatpak run --filesystem="$PWD" --command=flatpak-builder-lint org.flatpak.Builder manifest "$MANIFEST"
+        run: |
+          # O checkout pertence a outro usuário no container: o lint roda numa cópia gravável.
+          work=$(mktemp -d) && cp -r "$GITHUB_WORKSPACE"/. "$work" && cd "$work"
+          flatpak run --filesystem="$work" --command=flatpak-builder-lint org.flatpak.Builder manifest "$MANIFEST"
 
       # Screenshot URLs point at the release tag, so this step only passes
       # once that tag is pushed.
       - name: Lint the metainfo
-        run: flatpak run --filesystem="$PWD" --command=flatpak-builder-lint org.flatpak.Builder appstream "packaging/flatpak/$APP_ID.metainfo.xml"
+        run: |
+          work=$(mktemp -d) && cp -r "$GITHUB_WORKSPACE"/. "$work" && cd "$work"
+          flatpak run --filesystem="$work" --command=flatpak-builder-lint org.flatpak.Builder appstream "packaging/flatpak/$APP_ID.metainfo.xml"
