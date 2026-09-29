@@ -65,7 +65,7 @@ modules:
       - type: git
         url: https://github.com/brayanspagnol/OpenMHub.git
         tag: v0.3.1
-        commit: 1a84a885d1c95672f37191643ce1501a562fa0f0
+        commit: bd19dffdb0e3ce36a31ad2c7951f4daeae21f522
         dest: src
         x-checker-data:
           type: git
