@@ -3,6 +3,7 @@ import { mouseRender, keyboardRender, receiverRender } from './renders.js';
 import { createDriver } from './drivers/index.js';
 import { mousePane, bindMousePane } from './views/mouse.js';
 import { profilesSidebar, bindProfilesSidebar } from './views/profiles.js';
+import { overviewPane, bindOverview } from './views/overview.js';
 import { testerPage, bindTester, TESTER_ICON } from './views/tester.js';
 
 // Módulos opcionais: se ainda não existirem, o app segue com as ilustrações e sem as abas do teclado.
@@ -88,6 +89,9 @@ async function rescan(force = false) {
     state.drivers.set(k, drv);
     try { await drv.open(); } catch (err) { console.warn('open', k, err); }
   }
+  // Os cartões aparecem já com a lista de aparelhos; bateria e conexão chegam na leitura seguinte.
+  state.scanned = true;
+  render();
   await pollAll();
 }
 
@@ -262,53 +266,8 @@ function renderDevice() {
   const modeName = { wired: 'Com fio (USB)', '2.4g': 'Sem fio 2.4G', bt: 'Bluetooth' }[st.mode] || 'Desconhecido';
   let pane;
   if (state.tab === 'overview') {
-    const pct = st.battery;
-    const cls = st.charging ? 'charging' : pct != null && pct < 20 ? 'low' : '';
-    pane = `<div class="grid2">
-      <div class="scard">
-        <h3>Bateria</h3>
-        <p>${st.charging ? 'Carregando pelo cabo USB.' : st.battery != null ? 'Nível informado pelo aparelho.' : 'O aparelho não informou a bateria.'}</p>
-        <div class="big-battery">
-          <div class="pct" ${pct != null ? `data-count="${pct}"` : ''} style="color:${st.charging ? 'var(--green)' : cls === 'low' ? 'var(--orange)' : 'inherit'}">${pct != null ? pct + '%' : '--'}</div>
-          <div class="meter ${cls}"><div style="width:${pct ?? 0}%"></div></div>
-        </div>
-      </div>
-      <div class="scard">
-        <h3>Conexão</h3>
-        <p>Como o aparelho está falando com o computador agora.</p>
-        <dl class="kv">
-          <dt>Modo</dt><dd>${modeName}</dd>
-          <dt>Estado</dt><dd>${st.online === false ? 'Desligado ou fora de alcance' : st.sleeping ? 'Em repouso' : 'Ativo'}</dd>
-          ${st.via ? `<dt>Via</dt><dd>${esc(st.via)}</dd>` : ''}
-        </dl>
-      </div>
-      <div class="scard">
-        <h3>Aparelho</h3>
-        <dl class="kv">
-          <dt>Nome USB</dt><dd>${esc(drv.productName)}</dd>
-          <dt>VID:PID</dt><dd>${esc(item.key)}</dd>
-          ${st.firmware ? `<dt>Firmware</dt><dd>${esc(st.firmware)}</dd>` : ''}
-          ${st.receiverFirmware ? `<dt>Firmware receptor</dt><dd>${esc(st.receiverFirmware)}</dd>` : ''}
-          ${st.pollingRate ? `<dt>Taxa de polling</dt><dd>${st.pollingRate} Hz</dd>` : ''}
-          ${st.dpi ? `<dt>DPI atual</dt><dd>${st.dpi}</dd>` : ''}
-        </dl>
-      </div>
-      ${st.config ? `<div class="scard">
-        <h3>Configuração salva no mouse</h3>
-        <p>Lida da memória do aparelho. Altere nas abas DPI e Desempenho.</p>
-        <dl class="kv">
-          <dt>Estágios de DPI</dt><dd>${st.config.dpis.map((d, i) => i === st.config.dpiIndex ? `<span style="color:var(--accent)">[${d}]</span>` : d).join(' · ')}</dd>
-          <dt>Taxa de polling</dt><dd>${st.pollingRate ?? '--'} Hz</dd>
-          <dt>LOD</dt><dd>${st.config.lod === 1 || st.config.lod === 2 ? st.config.lod + ' mm' : 'Padrão'}</dd>
-          <dt>Debounce</dt><dd>${st.config.debounce} ms</dd>
-          <dt>Repouso</dt><dd>${st.config.sleep ? st.config.sleep + ' min' : 'Nunca'}</dd>
-          <dt>Motion Sync</dt><dd>${st.config.sensor & 32 ? 'Ligado' : 'Desligado'}</dd>
-          <dt>Correção de linha</dt><dd>${st.config.sensor & 1 ? 'Ligada' : 'Desligada'}</dd>
-          <dt>Controle de ripple</dt><dd>${st.config.sensor & 16 ? 'Ligado' : 'Desligado'}</dd>
-        </dl>
-      </div>` : ''}
-      ${state.debug ? `<div class="scard"><h3>Depuração</h3><p>Últimas respostas HID.</p><div class="raw">${esc(JSON.stringify(st.raw || {}, null, 1))}</div></div>` : ''}
-    </div>`;
+    pane = overviewPane(ctxFor(item), item)
+      + (state.debug ? `<div class="scard" style="margin-top:16px"><h3>Depuração</h3><p>Últimas respostas HID.</p><div class="raw">${esc(JSON.stringify(st.raw || {}, null, 1))}</div></div>` : '');
   } else if (drv.kind === 'mouse' && st.canWrite) {
     pane = mousePane(state.tab, ctxFor(item));
   } else if (drv.kind === 'keyboard' && kbView.keyboardPane) {
@@ -587,6 +546,7 @@ function bindPane(pane) {
   const item = logicalDevices().find((x) => x.id === state.current);
   if (!item) return;
   bindProfilesSidebar(pane.closest('.dpage'), ctxFor(item));
+  if (state.tab === 'overview') bindOverview(pane, (tab) => go('device', { tab }));
   if (item.drv.kind === 'mouse' && item.st.canWrite) bindMousePane(pane, ctxFor(item));
   else if (item.drv.kind === 'keyboard' && kbView.bindKeyboardPane) kbView.bindKeyboardPane(pane, ctxFor(item));
 }

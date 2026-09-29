@@ -115,34 +115,41 @@ function posToDpi(p, r) {
   return Math.round(v / 50) * 50;
 }
 
-// Aba DPI no layout do M HUB atual: seletor de 1 a 6 níveis e um cartão com barra própria por nível.
+// Aba DPI: destaque do DPI em uso com gráfico dos níveis e um cartão por nível.
 function dpiPane({ st }) {
   const c = st.config;
   const r = st.dpiRange;
-  const marks = [200, 1200, 2200, 3200, 4200].filter((m) => m >= r.min && m < r.max).concat(r.max);
-  return `<div class="dpi2">
-    <div class="dpi2-top">
-      <span class="field-label">Número de níveis</span>
-      <div class="dpi2-count">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="${n === c.dpiCount ? 'on' : ''}" data-act="dpi-count" data-v="${n}">${n}</button>`).join('')}</div>
-      <span class="spacer"></span>
-      <button class="btn-text" data-act="dpi-reset">${icon('undo')}Restaurar padrão</button>
-    </div>
-    <div class="dpi2-grid">
-      ${c.dpis.slice(0, c.dpiCount).map((d, i) => {
-        const pos = dpiToPos(d, r) / 10;
-        return `<div class="dpi2-card ${i === c.dpiIndex ? 'on' : ''}" data-act="dpi-current" data-i="${i}" title="Clique para usar este nível">
-          <span class="dpi2-dot"></span><span class="dpi2-n">${i + 1}</span>
-          <div class="dpi2-slider" style="--p:${pos}%">
-            <div class="dpi2-track"><i class="dpi2-fill"></i>${marks.map((m) => `<b style="left:${dpiToPos(m, r) / 10}%"></b>`).join('')}</div>
-            <input type="range" min="0" max="1000" step="1" value="${Math.round(pos * 10)}" data-act="dpi-slider" data-i="${i}">
-            <div class="dpi2-marks">${marks.map((m) => `<span style="left:${dpiToPos(m, r) / 10}%">${m}</span>`).join('')}</div>
-          </div>
-          <input class="dpi2-val" type="number" min="${r.min}" max="${r.max}" step="50" value="${d}" data-act="dpi-input" data-i="${i}">
-          ${i === c.dpiIndex ? `<span class="dpi2-check">${icon('check')}</span>` : ''}
-        </div>`;
-      }).join('')}
-    </div>
-    <p class="dpi2-tip">Dica: o DPI é a sensibilidade do mouse. Use o botão de DPI do mouse para trocar de nível rápido.</p>
+  const levels = c.dpis.slice(0, c.dpiCount);
+  const top = Math.max(...levels, 1);
+  const barH = (d) => Math.round(18 + 82 * Math.sqrt(d / top));
+  return `<div class="dz">
+    <section class="ov-shell dz-hero"><div class="ov-core">
+      <div class="dz-now">
+        <span class="ov-eyebrow">DPI em uso</span>
+        <div class="dz-big"><b data-dz-now>${c.dpis[c.dpiIndex]}</b><small>DPI</small></div>
+        <p class="dz-sub">Nível ${c.dpiIndex + 1} de ${c.dpiCount} · troque pelo botão de DPI do mouse ou clique numa barra.</p>
+        <div class="dz-tools">
+          <div class="dz-count" role="group" aria-label="Número de níveis">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="${n === c.dpiCount ? 'on' : ''}" data-act="dpi-count" data-v="${n}" title="${n} ${n > 1 ? 'níveis' : 'nível'}">${n}</button>`).join('')}</div>
+          <button class="btn-text" data-act="dpi-reset">${icon('undo')}Restaurar padrão</button>
+        </div>
+      </div>
+      <div class="dz-chart">${levels.map((d, i) => `<button class="dz-bar ${i === c.dpiIndex ? 'on' : ''}" data-act="dpi-current" data-i="${i}" title="Usar o nível ${i + 1}">
+        <span class="dz-bar-v" data-bar-v="${i}">${d}</span><i style="height:${barH(d)}%" data-bar="${i}"></i><span class="dz-bar-n">${i + 1}</span></button>`).join('')}</div>
+    </div></section>
+    <div class="dz-levels">${levels.map((d, i) => {
+      const pos = dpiToPos(d, r) / 10;
+      const on = i === c.dpiIndex;
+      return `<section class="ov-shell dz-lvl ${on ? 'on' : ''}" data-act="dpi-current" data-i="${i}"><div class="ov-core">
+        <div class="dz-lvl-top"><span class="dz-lvl-n">${i + 1}</span><span class="ov-label">Nível ${i + 1}</span>
+          ${on ? '<span class="dz-pill">Em uso</span>' : '<span class="dz-use">Usar</span>'}</div>
+        <label class="dz-val"><input type="number" min="${r.min}" max="${r.max}" step="50" value="${d}" data-act="dpi-input" data-i="${i}"><span>DPI</span></label>
+        <div class="dz-slider" style="--p:${pos}%">
+          <div class="dz-track"><i></i></div>
+          <input type="range" min="0" max="1000" step="1" value="${Math.round(pos * 10)}" data-act="dpi-slider" data-i="${i}" aria-label="DPI do nível ${i + 1}">
+          <div class="dz-marks"><span>${r.min}</span><span style="left:50%">4200</span><span style="left:100%">${r.max}</span></div>
+        </div>
+      </div></section>`;
+    }).join('')}</div>
   </div>`;
 }
 
@@ -159,32 +166,51 @@ function slider(act, min, max, value, unit, color = 'var(--accent)') {
   </div>`;
 }
 
+// Desempenho em três grupos: resposta, energia e sensor.
+const LATENCY = { 125: '8 ms', 250: '4 ms', 500: '2 ms', 1000: '1 ms' };
+function seg(act, opts, cur) {
+  return `<div class="pf-seg">${opts.map(([v, label, hint]) => `<button class="${v === cur ? 'on' : ''}" data-act="${act}" data-v="${v}"><b>${label}</b>${hint ? `<small>${hint}</small>` : ''}</button>`).join('')}</div>`;
+}
+function bigSlider(act, min, max, value, unit, hint) {
+  const pct = ((value - min) / (max - min)) * 100;
+  return `<div class="pslider pf-slider" style="--p:${pct}%;--c:var(--accent)">
+    <div class="pf-val"><b data-val>${value}</b><small>${unit}</small></div>
+    <input type="range" data-act="${act}" min="${min}" max="${max}" step="1" value="${value}">
+    <div class="pf-ends"><span>${min}</span><span>${hint || ''}</span><span>${max}</span></div>
+  </div>`;
+}
+function toggleTile(act, on, ic, title, desc, exp = false) {
+  return `<button class="ov-shell pf-toggle ${on ? 'on' : ''}" data-act="${act}" role="switch" aria-checked="${on}"><div class="ov-core">
+    <div class="pf-toggle-top"><span class="ov-ico">${icon(ic)}</span><span class="switch ${on ? 'on' : ''}"></span></div>
+    <b>${title}${exp ? EXP : ''}</b><p>${desc}</p>
+  </div></button>`;
+}
+const pfCard = (cls, title, desc, body) => `<section class="ov-shell ${cls}"><div class="ov-core"><div class="pf-head"><h3>${title}</h3>${desc ? `<p>${desc}</p>` : ''}</div>${body}</div></section>`;
+
 function perfPane({ st, drv }) {
   const c = st.config;
   const never = c.sleep === 0;
-  const left = [
-    card('Hibernação <small>(minutos)</small>', 'Sem uso por esse tempo em 2.4G ou Bluetooth, o mouse entra em repouso.', {
-      below: `<div class="row-gap">${slider('sleep', 1, 100, never ? 3 : c.sleep, 'minutos')}${radio('sleep-never', 1, never, 'Nunca dormir')}</div>`,
-    }),
-    card('Taxa de polling <small>(Hz)</small>', drv.isCable ? 'Com cabo a taxa é fixa em 1000 Hz.' : 'Taxa maior reduz o atraso de entrada e gasta mais bateria.', {
-      below: `<div class="radios">${drv.isCable ? radio('none', 0, true, '1000') : RATES.map((r, i) => radio('rate', i, i === c.rateIdx, r)).join('')}</div>`,
-    }),
-    card('Debounce das teclas <small>(milissegundos)</small>', 'Valor menor responde mais rápido; valor maior evita clique duplo. Não deixe baixo demais.', {
-      below: slider('debounce', 0, 20, c.debounce, 'milissegundos'),
-    }),
-    card('Altura de levantamento (LOD)' + EXP, 'Altura a partir da qual o sensor para de ler o movimento.', {
-      below: `<div class="radios">${[1, 2].map((v) => radio('lod', v, c.lod === v || (v === 1 && c.lod === 0xff), `${v} mm`)).join('')}</div>`,
-    }),
-  ];
-  const right = [
-    card('Controle de ondulação' + EXP, 'Ajuste de algoritmo em alta velocidade para eliminar tremidas em forma de onda.', { inline: sw('sensor-ripple', !!(c.sensor & SENSOR.ripple)) }),
-    card('Correção de linha', 'O mouse endireita o movimento em linha reta.', { inline: sw('sensor-angle', !!(c.sensor & SENSOR.angleSnap)) }),
-    card('Motion Sync' + EXP, 'Sincroniza a leitura do sensor com o envio ao computador, para movimento mais regular.', { inline: sw('sensor-motion', !!(c.sensor & SENSOR.motionSync)) }),
-    card('Direção da rolagem', 'Inverte o sentido da roda do mouse.', {
-      below: `<div class="radios">${radio('scroll', 0, c.scroll !== 1, 'Normal')}${radio('scroll', 1, c.scroll === 1, 'Invertida')}</div>`,
-    }),
-  ];
-  return `<div class="perf-grid"><div class="col">${left.join('')}</div><div class="col">${right.join('')}</div></div>`;
+  const rate = drv.isCable ? 1000 : RATES[c.rateIdx];
+  return `<div class="pf">
+    <h4 class="pf-group">Resposta</h4>
+    ${pfCard('pf-rate', 'Taxa de polling', drv.isCable ? 'Com cabo a taxa é fixa em 1000 Hz.' : 'Quantas vezes por segundo o mouse fala com o computador. Mais alto = menos atraso e mais gasto de bateria.',
+      drv.isCable ? seg('none', [[1000, '1000 Hz', '1 ms']], 1000) : seg('rate', RATES.map((r, i) => [i, `${r} Hz`, LATENCY[r]]), c.rateIdx))}
+    ${pfCard('pf-deb', 'Debounce dos botões', 'Tempo mínimo entre dois cliques. Baixo demais pode gerar clique duplo sozinho.', bigSlider('debounce', 0, 20, c.debounce, 'ms', 'recomendado 4 a 10'))}
+    <h4 class="pf-group">Energia</h4>
+    ${pfCard('pf-sleep', 'Hibernação', 'Sem uso por esse tempo no 2.4G, o mouse entra em repouso para poupar bateria.',
+      `<div class="pf-sleep-row">${never ? '<div class="pf-never"><b>∞</b><span>O mouse nunca dorme. Isso gasta mais bateria.</span></div>' : bigSlider('sleep', 1, 100, c.sleep, 'min', '')}
+        <button class="pf-chip ${never ? 'on' : ''}" data-act="sleep-never">${never ? icon('check') : ''}Nunca dormir</button></div>`)}
+    <h4 class="pf-group">Sensor</h4>
+    <div class="pf-toggles">
+      ${toggleTile('sensor-angle', !!(c.sensor & SENSOR.angleSnap), 'dpi', 'Correção de linha', 'Endireita o movimento em linhas retas. Bom para desenho, ruim para mira.')}
+      ${toggleTile('sensor-motion', !!(c.sensor & SENSOR.motionSync), 'perf', 'Motion Sync', 'Sincroniza o sensor com o envio ao computador para um movimento mais regular.', true)}
+      ${toggleTile('sensor-ripple', !!(c.sensor & SENSOR.ripple), 'wifi', 'Controle de ondulação', 'Remove tremidas em forma de onda em movimentos muito rápidos.', true)}
+    </div>
+    <div class="pf-pair">
+      ${pfCard('pf-lod', 'Altura de levantamento (LOD)' + EXP, 'Altura em que o sensor para de ler ao levantar o mouse.', seg('lod', [[1, '1 mm', 'mais preciso'], [2, '2 mm', 'mais tolerante']], c.lod === 2 ? 2 : 1))}
+      ${pfCard('pf-scroll', 'Direção da rolagem', 'Sentido da roda do mouse.', seg('scroll', [[0, 'Normal', ''], [1, 'Invertida', '']], c.scroll === 1 ? 1 : 0))}
+    </div>
+  </div>`;
 }
 
 function othersPane(ctx) {
@@ -253,17 +279,20 @@ export function bindMousePane(root, ctx) {
   const setDpi = (i, v) => { const dpis = [...c.dpis]; dpis[i] = clamp(v); return ctx.write({ dpis }); };
 
   // DPI
-  on('[data-act="dpi-count"]', 'click', (el, e) => { e.stopPropagation(); const n = +el.dataset.v; ctx.write({ dpiCount: n, dpiIndex: Math.min(c.dpiIndex, n - 1) }); });
+  on('[data-act="dpi-count"]', 'click', (el, e) => { e.stopPropagation(); const n = +el.dataset.v; if (n !== c.dpiCount) ctx.write({ dpiCount: n, dpiIndex: Math.min(c.dpiIndex, n - 1) }); });
   on('[data-act="dpi-current"]', 'click', (el, e) => {
-    if (e.target.closest('input')) return;
+    if (e.target.closest('input, label')) return;
     const i = +el.dataset.i; if (i !== c.dpiIndex) ctx.write({ dpiIndex: i });
   });
   on('[data-act="dpi-input"]', 'change', (el) => setDpi(+el.dataset.i, +el.value));
   on('[data-act="dpi-input"]', 'keydown', (el, e) => { if (e.key === 'Enter') el.blur(); });
   on('[data-act="dpi-slider"]', 'input', (el) => {
-    const card = el.closest('.dpi2-card');
-    card.querySelector('.dpi2-slider').style.setProperty('--p', `${el.value / 10}%`);
-    card.querySelector('.dpi2-val').value = posToDpi(+el.value, st.dpiRange);
+    const i = +el.dataset.i, v = posToDpi(+el.value, st.dpiRange);
+    const card = el.closest('.dz-lvl');
+    card.querySelector('.dz-slider').style.setProperty('--p', `${el.value / 10}%`);
+    card.querySelector('[data-act="dpi-input"]').value = v;
+    const lbl = root.querySelector(`[data-bar-v="${i}"]`); if (lbl) lbl.textContent = v;
+    if (i === c.dpiIndex) { const now = root.querySelector('[data-dz-now]'); if (now) now.textContent = v; }
   });
   on('[data-act="dpi-slider"]', 'change', (el) => setDpi(+el.dataset.i, posToDpi(+el.value, st.dpiRange)));
   on('[data-act="dpi-reset"]', 'click', () => ctx.write({ dpis: [...DEFAULT_CONFIG.dpis], dpiCount: 6, dpiIndex: DEFAULT_CONFIG.dpiIndex }));
