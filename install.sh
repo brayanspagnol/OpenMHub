@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Instala ou remove o OpenMHub para o usuário atual (sem npm, sem root).
-# Só o electron42 (pacman) e a regra udev precisam de root; os dois são pulados se já estiverem instalados.
+# Electron: usa o electron42 do sistema; no Arch instala com o pacman; nas outras distribuições baixa o oficial.
+# Só o pacman, o chrome-sandbox e a regra udev precisam de root; são pulados se já estiverem prontos.
 #
 # Uso: install.sh [opções]
 #   (sem opções)      instala no terminal, como antes
@@ -23,6 +24,8 @@ bin="$HOME/.local/bin"
 launcher="$bin/mhub-linux"
 rule=/etc/udev/rules.d/70-mhub-linux.rules
 askpass="$src/packaging/askpass.py"
+# Electron baixado nas distribuições sem o pacote electron42 (os SHA256 abaixo são desta versão).
+electron_version=42.9.3
 
 # Mensagens no idioma do sistema: L <português> <inglês> <espanhol> <francês> (sem tradução: inglês).
 lang="${LANGUAGE:-${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}}"
@@ -107,8 +110,8 @@ if [ "$ui" = gui ]; then
   fi
   ui=terminal
   if ! [ -t 0 ]; then
-    msg="$(L 'Não foi possível abrir o instalador gráfico: ele precisa de uma sessão gráfica e do python-gobject (GTK 4). Rode num terminal: sh MHUB-Linux-Installer.run --terminal' \
-      "Couldn't open the graphical installer: it needs a graphical session and python-gobject (GTK 4). Run it in a terminal: sh MHUB-Linux-Installer.run --terminal" 'No se pudo abrir el instalador gráfico: requiere una sesión gráfica y python-gobject (GTK 4). Ejecútalo en una terminal: sh MHUB-Linux-Installer.run --terminal' 'Impossible d’ouvrir l’installateur graphique : il nécessite une session graphique et python-gobject (GTK 4). Lancez-le dans un terminal : sh MHUB-Linux-Installer.run --terminal')"
+    msg="$(L 'Não foi possível abrir o instalador gráfico: ele precisa de uma sessão gráfica e do python-gobject (GTK 4). Rode num terminal: sh OpenMHub-Installer.run --terminal' \
+      "Couldn't open the graphical installer: it needs a graphical session and python-gobject (GTK 4). Run it in a terminal: sh OpenMHub-Installer.run --terminal" 'No se pudo abrir el instalador gráfico: requiere una sesión gráfica y python-gobject (GTK 4). Ejecútalo en una terminal: sh OpenMHub-Installer.run --terminal' 'Impossible d’ouvrir l’installateur graphique : il nécessite une session graphique et python-gobject (GTK 4). Lancez-le dans un terminal : sh OpenMHub-Installer.run --terminal')"
     command -v notify-send >/dev/null 2>&1 && notify-send "OpenMHub" "$msg" || true
     echo "$msg" >&2
     exit 1
@@ -187,11 +190,12 @@ fi
 
 # ---------- Instalar ----------
 if [ "$src" = "$dest" ]; then
-  echo "$(L 'Esta é a cópia instalada. Para atualizar, rode o instalador baixado (MHUB-Linux-Installer.run).' \
-    'This is the installed copy. To update, run the downloaded installer (MHUB-Linux-Installer.run).' 'Esta es la copia instalada. Para actualizar, ejecuta el instalador descargado (MHUB-Linux-Installer.run).' 'Ceci est la copie installée. Pour mettre à jour, lancez l’installateur téléchargé (MHUB-Linux-Installer.run).')" >&2
+  echo "$(L 'Esta é a cópia instalada. Para atualizar, rode o instalador baixado (OpenMHub-Installer.run).' \
+    'This is the installed copy. To update, run the downloaded installer (OpenMHub-Installer.run).' 'Esta es la copia instalada. Para actualizar, ejecuta el instalador descargado (OpenMHub-Installer.run).' 'Ceci est la copie installée. Pour mettre à jour, lancez l’installateur téléchargé (OpenMHub-Installer.run).')" >&2
   exit 1
 fi
 
+electron=electron42
 step electron run "$(L 'Verificando o Electron' 'Checking Electron' 'Comprobando Electron' 'Vérification d’Electron')"
 if command -v electron42 >/dev/null 2>&1; then
   step electron skip "$(L 'electron42 já instalado' 'electron42 already installed' 'electron42 ya está instalado' 'electron42 déjà installé')"
@@ -204,9 +208,38 @@ elif command -v pacman >/dev/null 2>&1; then
     exit 1
   fi
 else
-  step electron fail "$(L 'Falta o Electron 42. Esta distribuição não tem o pacote electron42 do Arch: baixe o Electron 42 em github.com/electron/electron/releases, extraia e crie um link ~/.local/bin/electron42 para o executável electron; depois rode o instalador de novo.' \
-    'Electron 42 is missing. This distribution has no electron42 package (Arch): download Electron 42 from github.com/electron/electron/releases, extract it and link ~/.local/bin/electron42 to the electron executable, then run the installer again.' 'Falta Electron 42. Esta distribución no tiene el paquete electron42 (Arch): descarga Electron 42 desde github.com/electron/electron/releases, extráelo y crea un enlace ~/.local/bin/electron42 al ejecutable electron; luego vuelve a ejecutar el instalador.' 'Electron 42 est introuvable. Cette distribution n’a pas le paquet electron42 (Arch) : téléchargez Electron 42 depuis github.com/electron/electron/releases, extrayez-le et créez un lien ~/.local/bin/electron42 vers l’exécutable electron, puis relancez l’installateur.')"
-  exit 1
+  # Outras distribuições: Electron oficial do GitHub dentro de $dest, conferido pelo SHA256 abaixo.
+  case "$(uname -m)" in
+    x86_64) earch=x64; esum=46fc1cd5d70de57c372fbc0f36870c4c4d80b127a0d452d80bd577c5a7d39b7d ;;
+    aarch64) earch=arm64; esum=1064e5cc5aa6490bb094b5e665cad4c8d520dcd4d52581ad68877793199fb903 ;;
+    armv7l) earch=armv7l; esum=41439e99891463e9bca4799e13ad636d8ecc81afc05bb6ac616b12747ab01bb7 ;;
+    *) step electron fail "$(L 'Arquitetura sem Electron:' 'No Electron build for this architecture:' 'Arquitectura sin Electron:' 'Architecture sans Electron :') $(uname -m)"; exit 1 ;;
+  esac
+  electron="$dest/electron/electron"
+  if [ "$(cat "$dest/electron/.mhub-electron" 2>/dev/null)" = "$electron_version-$earch" ] && [ -x "$electron" ]; then
+    step electron skip "Electron $electron_version $(L 'já baixado' 'already downloaded' 'ya descargado' 'déjà téléchargé')"
+  else
+    step electron run "$(L 'Baixando o Electron' 'Downloading Electron' 'Descargando Electron' 'Téléchargement d’Electron') $electron_version (~110 MB)"
+    zip="$(mktemp "${TMPDIR:-/tmp}/mhub-electron.XXXXXX")"
+    url="https://github.com/electron/electron/releases/download/v$electron_version/electron-v$electron_version-linux-$earch.zip"
+    if command -v curl >/dev/null 2>&1; then get() { curl -fsSL -o "$zip" "$url"; }; else get() { wget -qO "$zip" "$url"; }; fi
+    if ! get || [ "$(sha256sum "$zip" | cut -d' ' -f1)" != "$esum" ]; then
+      rm -f "$zip"
+      step electron fail "$(L 'Falha ao baixar ou conferir o Electron de' 'Couldn’t download or verify Electron from' 'No se pudo descargar o verificar Electron desde' 'Impossible de télécharger ou de vérifier Electron depuis') $url"
+      exit 1
+    fi
+    rm -rf "$dest/electron"; mkdir -p "$dest/electron"
+    if command -v unzip >/dev/null 2>&1; then unzip -q "$zip" -d "$dest/electron"; else python3 -m zipfile -e "$zip" "$dest/electron"; fi
+    rm -f "$zip"
+    chmod +x "$electron" "$dest/electron/chrome_crashpad_handler" "$dest/electron/chrome-sandbox"
+    echo "$electron_version-$earch" > "$dest/electron/.mhub-electron"
+    step electron ok "Electron $electron_version $(L 'em' 'in' 'en' 'dans') ${dest/#$HOME/\~}/electron"
+  fi
+  # Sem user namespaces (Ubuntu 24.04+ com AppArmor), o Electron só abre com o chrome-sandbox setuid root.
+  if [ "$(stat -c %u%a "$dest/electron/chrome-sandbox")" != 04755 ] &&
+     ! as_root "chown root:root '$dest/electron/chrome-sandbox' && chmod 4755 '$dest/electron/chrome-sandbox'" "$(L 'configurar o sandbox do Electron (chrome-sandbox)' 'set up the Electron sandbox (chrome-sandbox)' 'configurar el sandbox de Electron (chrome-sandbox)' 'configurer le bac à sable d’Electron (chrome-sandbox)')"; then
+    step electron fail "$(L 'Sandbox do Electron não configurado; se o app não abrir, rode' 'Electron sandbox not set up; if the app doesn’t open, run' 'Sandbox de Electron no configurado; si la aplicación no abre, ejecuta' 'Bac à sable d’Electron non configuré ; si l’application ne s’ouvre pas, lancez'): sudo chown root:root '$dest/electron/chrome-sandbox' && sudo chmod 4755 '$dest/electron/chrome-sandbox'"
+  fi
 fi
 
 step app run "$(L 'Copiando o app para' 'Copying the app to' 'Copiando la aplicación a' 'Copie de l’application dans') ${dest/#$HOME/\~}"
@@ -225,7 +258,7 @@ cat > "$launcher" <<LAUNCHER
 #!/usr/bin/env bash
 # Lançador do OpenMHub (instalado por install.sh).
 export MHUB_LAUNCHER="$launcher"
-exec env -u ELECTRON_RUN_AS_NODE electron42 "$dest/app" "\$@"
+exec env -u ELECTRON_RUN_AS_NODE "$electron" "$dest/app" "\$@"
 LAUNCHER
 chmod +x "$launcher"
 step app ok "App $version $(L em in en dans) ${dest/#$HOME/\~}"

@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- The installer works on any glibc-based distribution: when `electron42` is not installed and there is no pacman, it downloads the official Electron 42 build, checks its SHA-256 checksum, and sets up its sandbox helper.
+- One-line install command in the README.
+
+### Changed
+
+- The release installer is now named `OpenMHub-Installer.run` in every release, so the latest one has a stable download link.
+
+### Removed
+
+- Flathub instructions from the README. A Flathub release is not planned for now.
+
 ## [0.3.1] - 2026-09-29
 
 ### Added

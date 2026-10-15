@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gera em dist/:
-#   MHUB-Linux-Installer.run     instalador de arquivo único (cabeçalho sh + tar.gz com app, install.sh e o instalador GTK)
+#   OpenMHub-Installer.run     instalador de arquivo único (cabeçalho sh + tar.gz com app, install.sh e o instalador GTK)
 #   mhub-linux-<versão>-*.pkg.*  pacote Arch feito com packaging/PKGBUILD (se houver makepkg)
 # Tudo é montado numa pasta temporária; nada é instalado no sistema.
 set -euo pipefail
@@ -25,15 +25,15 @@ install -m644 "$root/packaging/mhub-linux.desktop" "$payload/packaging/"
 install -m644 "$root/udev/70-mhub-linux.rules" "$payload/udev/"
 find "$payload" -name '__pycache__' -prune -exec rm -rf {} +
 
-run="$dist/MHUB-Linux-Installer.run"
+run="$dist/OpenMHub-Installer.run"
 cat > "$tmp/header.sh" <<HEADER
 #!/bin/sh
 # OpenMHub $version: instalador de arquivo único.
-#   sh MHUB-Linux-Installer.run               abre o instalador gráfico (ou pergunta no terminal)
-#   sh MHUB-Linux-Installer.run --terminal    instala pelo terminal
-#   sh MHUB-Linux-Installer.run --yes         instala sem perguntar
-#   sh MHUB-Linux-Installer.run --uninstall   remove (--all remove também a regra udev e as preferências)
-#   sh MHUB-Linux-Installer.run --help        todas as opções (as mesmas do install.sh)
+#   sh OpenMHub-Installer.run               abre o instalador gráfico (ou pergunta no terminal)
+#   sh OpenMHub-Installer.run --terminal    instala pelo terminal
+#   sh OpenMHub-Installer.run --yes         instala sem perguntar
+#   sh OpenMHub-Installer.run --uninstall   remove (--all remove também a regra udev e as preferências)
+#   sh OpenMHub-Installer.run --help        todas as opções (as mesmas do install.sh)
 tmp=\$(mktemp -d "\${TMPDIR:-/tmp}/mhub-installer.XXXXXX") || exit 1
 trap 'rm -rf "\$tmp"' EXIT
 trap 'exit 130' INT TERM

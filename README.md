@@ -46,7 +46,7 @@ See at a glance how much battery each device has, whether it is charging, and wh
 - **Tray and notifications:** a tray icon with each device's battery, low-battery and full-charge notifications, DPI changes from the mouse button, and Caps/Num/Scroll Lock.
 - Light and dark themes, grid and list views of the devices, and M HUB's screen, tab and card animations.
 
-The interface is in Brazilian Portuguese for now. Translations are welcome.
+The interface is in Brazilian Portuguese, English, Spanish and French. Translations are welcome.
 
 ## Supported devices
 
@@ -61,34 +61,31 @@ Other MCHOSE devices appear with their picture, but without battery or settings 
 
 ## Installation
 
-### Flathub
+### Quick install (any distribution)
 
-> Coming soon: the Flathub submission is in progress.
-
-```sh
-flatpak install flathub io.github.brayanspagnol.OpenMHub
-```
-
-A Flatpak cannot install udev rules, so run this once on the host to let the app talk to the devices without root (the app shows the same command when it finds no device), then unplug and replug the receiver or cable:
+Run this in a terminal. It downloads the installer from the latest release and installs without further questions:
 
 ```sh
-printf '%s\n' 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3837", MODE="0660", TAG+="uaccess"' 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="41e4", MODE="0660", TAG+="uaccess"' | sudo tee /etc/udev/rules.d/70-mhub-linux.rules >/dev/null && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw
+curl -fLo /tmp/OpenMHub-Installer.run https://github.com/brayanspagnol/OpenMHub/releases/latest/download/OpenMHub-Installer.run && sh /tmp/OpenMHub-Installer.run --yes
 ```
 
-In the Flatpak, "Iniciar com o sistema" (start with the system) is not available.
+It asks for your password once or twice (see [What the installer does](#installer-any-distribution)). It works on glibc-based distributions (Arch, Debian, Ubuntu, Fedora, openSUSE…) on x86-64 and ARM (64-bit and 32-bit). Alpine and other musl-based distributions are not supported.
 
 ### Installer (any distribution)
 
-Download `MHUB-Linux-Installer.run` from the [latest release](../../releases/latest), then double-click it, or run `sh MHUB-Linux-Installer.run` in a terminal. A small window opens:
+Download `OpenMHub-Installer.run` from the [latest release](../../releases/latest), then double-click it, or run `sh OpenMHub-Installer.run` in a terminal. A small window opens:
 
 1. Click "Instalar". Optionally tick "Iniciar com o sistema" to start the app hidden in the tray when you log in.
 2. When it finishes, click "Abrir OpenMHub", or open "OpenMHub" from your application menu.
 
-Some file managers only run the file after you mark it as executable (`chmod +x MHUB-Linux-Installer.run`).
+Some file managers only run the file after you mark it as executable (`chmod +x OpenMHub-Installer.run`). The file name stays the same in every release, so `https://github.com/brayanspagnol/OpenMHub/releases/latest/download/OpenMHub-Installer.run` always points at the newest one.
 
 **What the installer does**
 
-- **Electron:** it needs `electron42`. On Arch it installs it with pacman when it is missing, asking for your password in a small window. On other distributions it tells you what to install.
+- **Electron:** the app runs on Electron 42.
+  - If `electron42` is already installed, it uses that.
+  - On Arch it installs `electron42` with pacman, asking for your password in a small window.
+  - On other distributions it downloads the official Electron build (about 110 MB) from Electron's GitHub releases into `~/.local/share/mhub-linux/electron`, and checks its SHA-256 checksum. It then asks for your password to set up Electron's sandbox helper (`chrome-sandbox`), which Ubuntu 24.04 and newer need.
 - **udev rule:** it installs a rule in `/etc/udev/rules.d` so the app can talk to the devices without root. That step asks for your password too, and is skipped when the rule is already there.
 - **Your home directory:** everything else goes here:
   - the app in `~/.local/share/mhub-linux`
@@ -107,7 +104,7 @@ Each release also has an Arch package, built from `packaging/PKGBUILD` (an AUR p
 
 ## Running
 
-Open "OpenMHub" from the application menu, or run `mhub-linux` (`flatpak run io.github.brayanspagnol.OpenMHub` for the Flatpak).
+Open "OpenMHub" from the application menu, or run `mhub-linux`.
 
 - F12 opens DevTools.
 - The Settings page has a debug mode that shows the raw HID responses.
@@ -127,8 +124,8 @@ Open "OpenMHub" from the application menu, or run `mhub-linux` (`flatpak run io.
   - Desktops that follow the XDG autostart spec pick this up.
   - Hyprland ignores that folder, so the app also adds one line marked `mhub-linux-autostart` to `~/.config/hypr/hyprland.lua` (or `hyprland.conf`). It removes the line when you turn the option off. The first edit saves a backup next to the file with the `.mhub-bak` suffix.
   - Other bare compositors need `exec-once = mhub-linux --hidden`, or its equivalent, in their config.
-- **Preferences:** saved in `~/.config/mhub-linux/prefs.json` (in the Flatpak, `~/.var/app/io.github.brayanspagnol.OpenMHub/config/mhub-linux/`). Downloaded product pictures are cached in `device-images/` next to it.
-- **Window class:** the Wayland app id is `mhub-linux`, matching the desktop entry (`io.github.brayanspagnol.OpenMHub` in the Flatpak).
+- **Preferences:** saved in `~/.config/mhub-linux/prefs.json`. Downloaded product pictures are cached in `device-images/` next to it.
+- **Window class:** the Wayland app id is `mhub-linux`, matching the desktop entry.
 
 ## Development
 
@@ -142,7 +139,7 @@ sudo cp udev/70-mhub-linux.rules /etc/udev/rules.d/ && sudo udevadm control --re
 ```
 
 - **Install from the checkout:** `./install.sh` installs with the same layout as the installer. `--gui` opens the installer window and `--help` lists the options. `./uninstall.sh` removes it.
-- **Build release files:** `packaging/build-installer.sh` builds `dist/MHUB-Linux-Installer.run` and, when `makepkg` is available, the Arch package from `packaging/PKGBUILD`.
+- **Build release files:** `packaging/build-installer.sh` builds `dist/OpenMHub-Installer.run` and, when `makepkg` is available, the Arch package from `packaging/PKGBUILD`.
 - **Only one instance runs at a time.** If the installed app is open, `./mhub-linux` just brings it to the front: quit it from the tray first.
 
 ### Project layout
@@ -187,7 +184,7 @@ To make a release:
 1. Set the new version in `app/package.json`.
 2. Move the `Unreleased` entries in `CHANGELOG.md` under the new version and date.
 3. Commit, then tag: `git tag -a v0.2.0 -m "v0.2.0"` and `git push --follow-tags`.
-4. Run `packaging/build-installer.sh`, and attach `dist/MHUB-Linux-Installer.run` and the Arch package to the GitHub release for the tag.
+4. Run `packaging/build-installer.sh`, and attach `dist/OpenMHub-Installer.run` and the Arch package to the GitHub release for the tag.
 
 ## How this project was built
 
