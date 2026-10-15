@@ -4,6 +4,7 @@ import { icon, batteryIcon } from '../icons.js';
 import { RATES } from '../drivers/g3v2.js';
 import { LIGHT_EFFECTS } from '../data/keyboard-ut98.js';
 import { t } from '../i18n.js';
+import { eqName, autoOffMin } from './headset.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const MODE = { wired: ['wired', t('mode.wired')], '2.4g': ['wifi', t('mode.24g')], bt: ['bluetooth', 'Bluetooth'] };
@@ -43,7 +44,7 @@ function hero(ctx, item) {
   const [mi, ml] = MODE[st.mode] || ['offline', t('common.unknown')];
   return shell('ov-hero', `
     <div class="ov-hero-text">
-      <span class="ov-eyebrow">${t(drv.kind === 'keyboard' ? 'kb.defaultName' : 'mouse.defaultName')}</span>
+      <span class="ov-eyebrow">${t({ keyboard: 'kb.defaultName', headset: 'hs.defaultName' }[drv.kind] || 'mouse.defaultName')}</span>
       <h2>${esc(st.name || drv.name)}</h2>
       <div class="ov-chips">
         <span class="ov-chip">${icon(mi)}${ml}</span>
@@ -112,8 +113,21 @@ function keyboardBody(ctx, item) {
     ${specs([[t('ov.model'), st.name || drv.name], [t('ov.connection'), st.via], ['USB', `${drv.productName} · ${item.key}`]])}`;
 }
 
+function headsetBody(ctx, item) {
+  const { st, drv } = ctx;
+  const s = st.settings;
+  if (!s) return `<div class="ov-wait">${t(st.online === false ? 'hs.off' : 'hs.reading')}</div>`;
+  const off = autoOffMin(s.autoOff);
+  return `
+    ${tile({ tab: 'perf', ic: 'perf', label: t('hs.eq'), value: `<span class="ov-word">${eqName(s.eq)}</span>`, foot: t('hs.eqFoot') })}
+    ${drv.model.turbo ? tile({ tab: 'perf', ic: 'moon', label: t('hs.autoOff'), value: off ?? '--', unit: off ? 'min' : '', foot: t('hs.autoOffFoot') }) : ''}
+    ${drv.model.turbo ? tile({ tab: 'perf', ic: 'info', label: t('hs.prompt'), value: s.prompt ?? '--', unit: '/16', foot: '' }) : ''}
+    ${specs([[t('ov.model'), st.name || drv.name], ['Firmware', st.firmware], [t('ov.receiver'), st.receiverFirmware], ['USB', `${drv.productName} · ${item.key}`]])}`;
+}
+
 export function overviewPane(ctx, item) {
-  const body = ctx.drv.kind === 'keyboard' ? keyboardBody(ctx, item) : mouseBody(ctx, item);
+  const kind = ctx.drv.kind;
+  const body = kind === 'keyboard' ? keyboardBody(ctx, item) : kind === 'headset' ? headsetBody(ctx, item) : mouseBody(ctx, item);
   return `<div class="ov">${hero(ctx, item)}${battery(ctx.st)}${body}</div>`;
 }
 

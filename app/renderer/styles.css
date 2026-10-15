@@ -785,3 +785,4 @@ html[theme-mode="dark"] .pf-seg button.on { background: #26272b; }
 .dz-now .ov-eyebrow { align-self: flex-start; }
 .pf-toggles { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; }
 .pf-pair { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; }
+.hs-note { margin: 0 0 4px; font-size: 13px; color: var(--text-2); }

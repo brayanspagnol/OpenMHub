@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- Headset support, not yet tested on hardware: battery, charging, firmware and the onboard EQ preset for the V9, V9 PRO, G9 PRO, S9 PRO, X9, V9 TURBO and V9 TURBO+, plus auto power-off, prompt tone volume and factory reset on the V9 TURBO models. The udev rule now also covers the 291d dongle shared by several headsets.
+- `tools/check-headset.mjs`, which checks the headset driver against a simulated headset.
+
+### Changed
+
+- The README uses the English names of the installer and tray buttons.
+
 ## [0.3.2] - 2026-10-15
 
 ### Added

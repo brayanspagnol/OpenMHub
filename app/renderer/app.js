@@ -2,6 +2,7 @@ import { icon, batteryIcon } from './icons.js';
 import { mouseRender, keyboardRender, receiverRender } from './renders.js';
 import { createDriver } from './drivers/index.js';
 import { mousePane, bindMousePane } from './views/mouse.js';
+import { headsetPane, bindHeadsetPane } from './views/headset.js';
 import { profilesSidebar, bindProfilesSidebar } from './views/profiles.js';
 import { overviewPane, bindOverview } from './views/overview.js';
 import { testerPage, bindTester, TESTER_ICON } from './views/tester.js';
@@ -270,6 +271,7 @@ function renderHome() {
 const TABS = {
   mouse: [['overview', 'info', t('tab.overview')], ['keymap', 'keymap', t('tab.buttons')], ['dpi', 'dpi', 'DPI'], ['perf', 'perf', t('tab.perf')], ['others', 'others', t('tab.others')]],
   keyboard: [['overview', 'info', t('tab.overview')], ['light', 'light', t('tab.light')], ['keymap', 'keymap', t('tab.keys')], ['perf', 'perf', t('tab.perf')], ['others', 'others', t('tab.others')]],
+  headset: [['overview', 'info', t('tab.overview')], ['perf', 'perf', t('hs.tab')], ['others', 'others', t('tab.others')]],
 };
 
 function renderDevice() {
@@ -286,6 +288,8 @@ function renderDevice() {
     pane = mousePane(state.tab, ctxFor(item));
   } else if (drv.kind === 'keyboard' && kbView.keyboardPane) {
     pane = kbView.keyboardPane(state.tab, ctxFor(item));
+  } else if (drv.kind === 'headset') {
+    pane = headsetPane(state.tab, ctxFor(item));
   } else {
     pane = `<div class="soon">${t('dev.soon')}</div>`;
   }
@@ -568,6 +572,7 @@ function bindPane(pane) {
   if (state.tab === 'overview') bindOverview(pane, (tab) => go('device', { tab }));
   if (item.drv.kind === 'mouse' && item.st.canWrite) bindMousePane(pane, ctxFor(item));
   else if (item.drv.kind === 'keyboard' && kbView.bindKeyboardPane) kbView.bindKeyboardPane(pane, ctxFor(item));
+  else if (item.drv.kind === 'headset' && item.st.settings) bindHeadsetPane(pane, ctxFor(item));
 }
 
 function bindSettings() {

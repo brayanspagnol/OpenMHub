@@ -154,10 +154,10 @@ function slider(act, min, max, value, unit, color = 'var(--accent)') {
 
 // Desempenho em três grupos: resposta, energia e sensor.
 const LATENCY = { 125: '8 ms', 250: '4 ms', 500: '2 ms', 1000: '1 ms' };
-function seg(act, opts, cur) {
+export function seg(act, opts, cur) {
   return `<div class="pf-seg">${opts.map(([v, label, hint]) => `<button class="${v === cur ? 'on' : ''}" data-act="${act}" data-v="${v}"><b>${label}</b>${hint ? `<small>${hint}</small>` : ''}</button>`).join('')}</div>`;
 }
-function bigSlider(act, min, max, value, unit, hint) {
+export function bigSlider(act, min, max, value, unit, hint) {
   const pct = ((value - min) / (max - min)) * 100;
   return `<div class="pslider pf-slider" style="--p:${pct}%;--c:var(--accent)">
     <div class="pf-val"><b data-val>${value}</b><small>${unit}</small></div>
@@ -171,7 +171,7 @@ function toggleTile(act, on, ic, title, desc, exp = false) {
     <b>${title}${exp ? EXP : ''}</b><p>${desc}</p>
   </div></button>`;
 }
-const pfCard = (cls, title, desc, body) => `<section class="ov-shell ${cls}"><div class="ov-core"><div class="pf-head"><h3>${title}</h3>${desc ? `<p>${desc}</p>` : ''}</div>${body}</div></section>`;
+export const pfCard = (cls, title, desc, body) => `<section class="ov-shell ${cls}"><div class="ov-core"><div class="pf-head"><h3>${title}</h3>${desc ? `<p>${desc}</p>` : ''}</div>${body}</div></section>`;
 
 function perfPane({ st, drv }) {
   const c = st.config;

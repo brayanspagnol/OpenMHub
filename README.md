@@ -46,7 +46,7 @@ See at a glance how much battery each device has, whether it is charging, and wh
 - **Tray and notifications:** a tray icon with each device's battery, low-battery and full-charge notifications, DPI changes from the mouse button, and Caps/Num/Scroll Lock.
 - Light and dark themes, grid and list views of the devices, and M HUB's screen, tab and card animations.
 
-The interface is in Brazilian Portuguese, English, Spanish and French. Translations are welcome.
+The app and the installer are in English, Brazilian Portuguese, Spanish and French. They follow the system language and fall back to English for any other language. To pick another one, go to Settings > General > Language. Translations are welcome. A new language needs a dictionary in `app/renderer/i18n/` (registered in `app/renderer/i18n.js`), the tray texts in `app/main.js`, and the installer texts in `install.sh` and `packaging/installer.py`; `node tools/check-i18n.mjs` checks that no key is missing.
 
 ## Supported devices
 
@@ -56,6 +56,11 @@ The interface is in Brazilian Portuguese, English, Spanish and French. Translati
 | MCHOSE G3 V2 2.4G receiver | 3837:4245 | Battery, charging, online state, firmware and all mouse settings |
 | MCHOSE UT98 / G98 V2 keyboard over its 2.4G dongle (Sinowealth) | 41e4:2004 | Battery, charging, sleep state and all keyboard settings |
 | MCHOSE UT98 / G98 V2 keyboard over its cable | 41e4:2203 | Battery and all keyboard settings, with the same protocol as the 2.4G dongle |
+| MCHOSE V9, V9 PRO, G9 PRO and S9 PRO headsets over their 2.4G dongle | 41e4:3201, 41e4:3202, 41e4:3502, 41e4:3402, 291d:385d | Battery, charging, firmware and the EQ preset. **Untested**: written from the M HUB source |
+| MCHOSE X9 headset | 3837:6045 | Same as above. **Untested** |
+| MCHOSE V9 TURBO and V9 TURBO+ headsets | 3837:600d, 3837:600a, 3837:6009 | Same as above, plus auto power-off, prompt tone volume and factory reset. **Untested** |
+
+On headsets, the equalizer sliders, surround, noise reduction and microphone settings that M HUB shows run in its Windows audio driver, not on the headset, so OpenMHub cannot offer them. Use your desktop's sound settings or an equalizer such as EasyEffects. If you own one of these headsets, please open an issue with what works.
 
 Other MCHOSE devices appear with their picture, but without battery or settings until someone adds a driver for their protocol. See [Adding a device](#adding-a-device).
 
@@ -75,8 +80,8 @@ It asks for your password once or twice (see [What the installer does](#installe
 
 Download `OpenMHub-Installer.run` from the [latest release](../../releases/latest), then double-click it, or run `sh OpenMHub-Installer.run` in a terminal. A small window opens:
 
-1. Click "Instalar". Optionally tick "Iniciar com o sistema" to start the app hidden in the tray when you log in.
-2. When it finishes, click "Abrir OpenMHub", or open "OpenMHub" from your application menu.
+1. Click "Install". Optionally tick "Launch at login" to start the app hidden in the tray when you log in.
+2. When it finishes, click "Open OpenMHub", or open "OpenMHub" from your application menu.
 
 Some file managers only run the file after you mark it as executable (`chmod +x OpenMHub-Installer.run`). The file name stays the same in every release, so `https://github.com/brayanspagnol/OpenMHub/releases/latest/download/OpenMHub-Installer.run` always points at the newest one.
 
@@ -96,7 +101,7 @@ Some file managers only run the file after you mark it as executable (`chmod +x 
 **Update and uninstall**
 
 - To update, run a newer installer.
-- To uninstall, run the installer again and click "Desinstalar", or run `~/.local/share/mhub-linux/uninstall.sh`. Add `--all` to also remove the udev rule and your preferences.
+- To uninstall, run the installer again and click "Uninstall", or run `~/.local/share/mhub-linux/uninstall.sh`. Add `--all` to also remove the udev rule and your preferences.
 
 ### Debian, Ubuntu, Fedora and openSUSE packages
 
@@ -131,9 +136,9 @@ Open "OpenMHub" from the application menu, or run `mhub-linux`.
 
 - **One copy at a time:** launching the app again brings the existing window to the front.
 - **Tray icon:** lists each device with its battery, charging state and connection mode.
-  - Clicking it opens the window. Its menu has "Abrir OpenMHub" and "Sair".
+  - Clicking it opens the window. Its menu has "Open OpenMHub" and "Quit".
   - It needs a StatusNotifierItem host, such as the waybar `tray` module or a KDE/GNOME tray extension.
-- **Closing the window:** hides it in the tray, so battery monitoring keeps running. Use "Sair" in the tray menu to quit. Without a tray, closing the window quits the app.
+- **Closing the window:** hides it in the tray, so battery monitoring keeps running. Use "Quit" in the tray menu. Without a tray, closing the window quits the app.
 - **Low-battery notification:**
   - It warns when a device that is not charging drops to the threshold (20% by default).
   - It fires once per discharge, and resets when the device charges or goes back above the threshold.
@@ -167,8 +172,8 @@ sudo cp udev/70-mhub-linux.rules /etc/udev/rules.d/ && sudo udevadm control --re
 | `app/main.js` | Electron main process: frameless window, WebHID permissions, tray, notifications, preferences and the `mhub-img://` protocol that downloads and caches product pictures |
 | `app/preload.js` | The `window.mhub` bridge between the UI and the main process |
 | `app/renderer/app.js` | Screens (home, device page, settings) and device polling |
-| `app/renderer/drivers/` | One driver per protocol: `g3v2.js` (G3 V2 mouse), `sinowealth.js` (UT98 / G98 V2 keyboard), `base.js` (shared HID request/response code) |
-| `app/renderer/views/` | Device tabs: `mouse.js`, `keyboard.js`, `macros.js`, `profiles.js`, `tester.js` |
+| `app/renderer/drivers/` | One driver per protocol: `g3v2.js` (G3 V2 mouse), `sinowealth.js` (UT98 / G98 V2 keyboard), `headset.js` (C-Media wireless headsets), `base.js` (shared HID request/response code) |
+| `app/renderer/views/` | Device tabs: `mouse.js`, `keyboard.js`, `headset.js`, `macros.js`, `profiles.js`, `tester.js` |
 | `app/renderer/data/` | Tables taken from M HUB: mouse button functions, the UT98 key layout, and the device catalog |
 | `app/renderer/device-images.js` | Finds the picture and colours of a device in `data/device-catalog.js` |
 | `app/renderer/assets/devices/generic/` | Generic mouse, keyboard and receiver icons, shown when a device has no picture or the picture cannot be downloaded |

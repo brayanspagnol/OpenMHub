@@ -22,7 +22,7 @@ const SHOT = process.env.MHUB_SHOT;
 if (SHOT) app.setPath('userData', path.join(os.tmpdir(), 'mhub-linux-shot'));
 
 // Fabricantes USB dos aparelhos MCHOSE (YJX-CHIP e SINOWEALTH).
-const VENDORS = new Set([0x3837, 0x41e4]);
+const VENDORS = new Set([0x3837, 0x41e4, 0x291d]);
 const ASSETS = path.join(__dirname, 'assets');
 const ICON = path.join(ASSETS, 'icon-256.png');
 

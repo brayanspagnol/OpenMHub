@@ -1,8 +1,9 @@
 import { GenericDriver } from './base.js';
 import { G3V2Driver } from './g3v2.js';
 import { SinowealthKeyboardDriver } from './sinowealth.js';
+import { HeadsetDriver } from './headset.js';
 
-const DRIVERS = [G3V2Driver, SinowealthKeyboardDriver];
+const DRIVERS = [G3V2Driver, SinowealthKeyboardDriver, HeadsetDriver];
 
 // Recebe todas as interfaces HID de um aparelho físico e devolve o driver certo.
 export function createDriver(devices) {

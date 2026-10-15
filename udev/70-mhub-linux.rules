@@ -3,3 +3,5 @@
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="3837", MODE="0660", TAG+="uaccess"
 # SINOWEALTH (dongle 2.4G dos teclados MCHOSE)
 SUBSYSTEM=="hidraw", ATTRS{idVendor}=="41e4", MODE="0660", TAG+="uaccess"
+# Dongle 2.4G dos headsets MCHOSE S9 PRO, G9 PRO, V9 e V9 PRO
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="291d", MODE="0660", TAG+="uaccess"
