@@ -6,18 +6,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-15
+
 ### Added
 
 - The installer works on any glibc-based distribution: when `electron42` is not installed and there is no pacman, it downloads the official Electron 42 build, checks its SHA-256 checksum, and sets up its sandbox helper.
+- `.deb` and `.rpm` packages for x86-64 and ARM64, with Electron included.
+- AUR package `openmhub`.
 - One-line install command in the README.
 
 ### Changed
 
 - The release installer is now named `OpenMHub-Installer.run` in every release, so the latest one has a stable download link.
+- The UT98 / G98 V2 keyboard over its cable is listed as supported: it uses the same protocol as the 2.4G dongle.
 
 ### Removed
 
-- Flathub instructions from the README. A Flathub release is not planned for now.
+- Flatpak packaging, the Flatpak CI workflow and the Flatpak-only code in the app. A Flathub release is not planned for now.
 
 ## [0.3.1] - 2026-09-29
 
@@ -57,7 +62,8 @@ First public release.
 - Tray icon, low-battery and full-charge notifications, DPI and lock-key notifications, start with the system.
 - Graphical installer (`MHUB-Linux-Installer.run`), Arch package, and a udev rule so the app runs without root.
 
-[Unreleased]: https://github.com/brayanspagnol/OpenMHub/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/brayanspagnol/OpenMHub/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/brayanspagnol/OpenMHub/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/brayanspagnol/OpenMHub/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/brayanspagnol/OpenMHub/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/brayanspagnol/OpenMHub/compare/v0.1.0...v0.2.0
