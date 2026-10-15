@@ -1,6 +1,6 @@
 pkgbase = openmhub
 	pkgdesc = Unofficial configurator for MCHOSE mice and keyboards (battery, DPI, lighting, macros)
-	pkgver = 0.3.1
+	pkgver = 0.3.2
 	pkgrel = 1
 	url = https://github.com/brayanspagnol/OpenMHub
 	install = openmhub.install
@@ -9,7 +9,7 @@ pkgbase = openmhub
 	depends = electron42
 	provides = mhub-linux
 	conflicts = mhub-linux
-	source = openmhub-0.3.1.tar.gz::https://github.com/brayanspagnol/OpenMHub/archive/refs/tags/v0.3.1.tar.gz
-	sha256sums = f6f133e627aa0777ad5f5d41ec937b9306062efe32131157ab9262e8a66af29a
+	source = openmhub-0.3.2.tar.gz::https://github.com/brayanspagnol/OpenMHub/archive/refs/tags/v0.3.2.tar.gz
+	sha256sums = eb7bd563e7772feaa76548116bfc11ffc40504da0e77141882665b8ef3ad78a0
 
 pkgname = openmhub
