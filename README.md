@@ -55,7 +55,7 @@ The interface is in Brazilian Portuguese, English, Spanish and French. Translati
 | MCHOSE G3 V2 over its cable | 3837:418c | Battery, firmware and all mouse settings. When the mouse switch is set to 2.4G, the cable only charges and this interface stays silent. |
 | MCHOSE G3 V2 2.4G receiver | 3837:4245 | Battery, charging, online state, firmware and all mouse settings |
 | MCHOSE UT98 / G98 V2 keyboard over its 2.4G dongle (Sinowealth) | 41e4:2004 | Battery, charging, sleep state and all keyboard settings |
-| MCHOSE UT98 / G98 V2 keyboard over its cable | 41e4:2203 | Implemented from the M HUB source, not yet tested on a real keyboard |
+| MCHOSE UT98 / G98 V2 keyboard over its cable | 41e4:2203 | Battery and all keyboard settings, with the same protocol as the 2.4G dongle |
 
 Other MCHOSE devices appear with their picture, but without battery or settings until someone adds a driver for their protocol. See [Adding a device](#adding-a-device).
 
@@ -98,9 +98,27 @@ Some file managers only run the file after you mark it as executable (`chmod +x 
 - To update, run a newer installer.
 - To uninstall, run the installer again and click "Desinstalar", or run `~/.local/share/mhub-linux/uninstall.sh`. Add `--all` to also remove the udev rule and your preferences.
 
+### Debian, Ubuntu, Fedora and openSUSE packages
+
+Each release has `.deb` and `.rpm` packages for x86-64 (`amd64` / `x86_64`) and ARM64 (`arm64` / `aarch64`). They include Electron, so nothing else needs to be downloaded. Download the one for your system from the [latest release](../../releases/latest) and install it:
+
+```sh
+sudo apt install ./openmhub_*_amd64.deb        # Debian, Ubuntu, Linux Mint, Pop!_OS
+sudo dnf install ./openmhub-*.x86_64.rpm        # Fedora
+sudo zypper install ./openmhub-*.x86_64.rpm     # openSUSE
+```
+
+They put the app in `/usr/lib/mhub-linux`, the launcher in `/usr/bin/mhub-linux` and the udev rule in `/usr/lib/udev/rules.d`. Your package manager handles updates and removal (`sudo apt remove openmhub`, `sudo dnf remove openmhub`).
+
 ### Arch Linux
 
-Each release also has an Arch package, built from `packaging/PKGBUILD` (an AUR package may follow). Install it with `sudo pacman -U mhub-linux-*.pkg.tar.zst`. It puts the app in `/usr/lib/mhub-linux`, the launcher in `/usr/bin/mhub-linux` and the udev rule in `/usr/lib/udev/rules.d`.
+OpenMHub is in the AUR as [`openmhub`](https://aur.archlinux.org/packages/openmhub). Install it with an AUR helper, for example `yay -S openmhub`, or by hand:
+
+```sh
+git clone https://aur.archlinux.org/openmhub.git && cd openmhub && makepkg -si
+```
+
+It uses the `electron42` package from the Arch repositories.
 
 ## Running
 
@@ -139,7 +157,7 @@ sudo cp udev/70-mhub-linux.rules /etc/udev/rules.d/ && sudo udevadm control --re
 ```
 
 - **Install from the checkout:** `./install.sh` installs with the same layout as the installer. `--gui` opens the installer window and `--help` lists the options. `./uninstall.sh` removes it.
-- **Build release files:** `packaging/build-installer.sh` builds `dist/OpenMHub-Installer.run` and, when `makepkg` is available, the Arch package from `packaging/PKGBUILD`.
+- **Build release files:** `packaging/build-installer.sh` builds `dist/OpenMHub-Installer.run`; the `.deb` and `.rpm` packages when [nfpm](https://nfpm.goreleaser.com) is installed (from `packaging/nfpm.yaml`, downloading Electron); and the Arch package from `packaging/PKGBUILD` when `makepkg` is available.
 - **Only one instance runs at a time.** If the installed app is open, `./mhub-linux` just brings it to the front: quit it from the tray first.
 
 ### Project layout
@@ -155,7 +173,7 @@ sudo cp udev/70-mhub-linux.rules /etc/udev/rules.d/ && sudo udevadm control --re
 | `app/renderer/device-images.js` | Finds the picture and colours of a device in `data/device-catalog.js` |
 | `app/renderer/assets/devices/generic/` | Generic mouse, keyboard and receiver icons, shown when a device has no picture or the picture cannot be downloaded |
 | `tools/fetch-device-assets.py` | Rebuilds the device catalog (with each picture's CDN URL) from M HUB's web app and remote config: `uv run --with pillow tools/fetch-device-assets.py`. Run it again when MCHOSE releases new products. |
-| `udev/`, `install.sh`, `uninstall.sh`, `packaging/` | udev rule, install scripts, GTK installer, desktop entry, PKGBUILD and `build-installer.sh` |
+| `udev/`, `install.sh`, `uninstall.sh`, `packaging/` | udev rule, install scripts, GTK installer, desktop entry, PKGBUILD, AUR package (`packaging/aur/`), `nfpm.yaml` for .deb/.rpm and `build-installer.sh` |
 
 ### Adding a device
 
@@ -184,7 +202,8 @@ To make a release:
 1. Set the new version in `app/package.json`.
 2. Move the `Unreleased` entries in `CHANGELOG.md` under the new version and date.
 3. Commit, then tag: `git tag -a v0.2.0 -m "v0.2.0"` and `git push --follow-tags`.
-4. Run `packaging/build-installer.sh`, and attach `dist/OpenMHub-Installer.run` and the Arch package to the GitHub release for the tag.
+4. Run `packaging/build-installer.sh`, and attach `dist/OpenMHub-Installer.run` and the `.deb` and `.rpm` packages to the GitHub release for the tag.
+5. Update the AUR package: set `pkgver` and the `sha256sums` of the tag's source tarball in `packaging/aur/PKGBUILD`, regenerate `.SRCINFO` with `makepkg --printsrcinfo > .SRCINFO`, commit, and push both files to `ssh://aur@aur.archlinux.org/openmhub.git`.
 
 ## How this project was built
 

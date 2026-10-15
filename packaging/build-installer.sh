@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Gera em dist/:
 #   OpenMHub-Installer.run     instalador de arquivo único (cabeçalho sh + tar.gz com app, install.sh e o instalador GTK)
+#   openmhub_<versão>_*.deb, openmhub-<versão>-*.rpm  pacotes com o Electron embutido (se houver nfpm)
 #   mhub-linux-<versão>-*.pkg.*  pacote Arch feito com packaging/PKGBUILD (se houver makepkg)
 # Tudo é montado numa pasta temporária; nada é instalado no sistema.
 set -euo pipefail
@@ -51,6 +52,37 @@ HEADER
 } > "$run"
 chmod 755 "$run"
 echo "==> $run ($(du -h "$run" | cut -f1))"
+
+# ---------- Pacotes .deb e .rpm (com o Electron oficial embutido) ----------
+if command -v nfpm >/dev/null 2>&1; then
+  # Mesma versão e SHA256 do Electron que o install.sh baixa.
+  electron_version="$(sed -n 's/^electron_version=//p' "$root/install.sh")"
+  for pair in amd64:x64 arm64:arm64; do
+    arch="${pair%%:*}" earch="${pair#*:}"
+    esum="$(sed -n "s/.*earch=$earch; esum=\([0-9a-f]*\) .*/\1/p" "$root/install.sh")"
+    stage="$tmp/stage-$arch"
+    zip="$tmp/electron-$earch.zip"
+    mkdir -p "$stage/electron"
+    curl -fsSL -o "$zip" "https://github.com/electron/electron/releases/download/v$electron_version/electron-v$electron_version-linux-$earch.zip"
+    echo "$esum  $zip" | sha256sum -c --quiet -
+    unzip -q "$zip" -d "$stage/electron"
+    mv "$stage/electron/chrome-sandbox" "$stage/chrome-sandbox"
+    cat > "$stage/mhub-linux" <<'LAUNCHER'
+#!/usr/bin/env bash
+export MHUB_LAUNCHER=/usr/bin/mhub-linux
+exec env -u ELECTRON_RUN_AS_NODE /usr/lib/mhub-linux/electron/electron /usr/lib/mhub-linux/app "$@"
+LAUNCHER
+    for fmt in deb rpm; do
+      # O nfpm não expande variáveis em contents; o envsubst preenche o nfpm.yaml antes.
+      VERSION="$version" ARCH="$arch" ROOT="$root" STAGE="$stage" envsubst '$VERSION $ARCH $ROOT $STAGE' \
+        < "$root/packaging/nfpm.yaml" > "$stage/nfpm.yaml"
+      nfpm package -f "$stage/nfpm.yaml" -p "$fmt" -t "$dist/" >/dev/null
+    done
+  done
+  ls -1 "$dist"/openmhub*.deb "$dist"/openmhub*.rpm | sed 's/^/==> /'
+else
+  echo "==> nfpm não encontrado: pacotes .deb e .rpm não gerados"
+fi
 
 # ---------- Pacote Arch ----------
 if command -v makepkg >/dev/null 2>&1; then

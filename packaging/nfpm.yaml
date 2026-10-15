@@ -1,0 +1,63 @@
+# .deb and .rpm packages, built by packaging/build-installer.sh with nfpm (https://nfpm.goreleaser.com).
+# The official Electron build is bundled, since Debian, Ubuntu and Fedora have no electron42 package.
+# Variables filled in with envsubst by build-installer.sh: VERSION, ARCH (amd64|arm64), ROOT (repository), STAGE (launcher, Electron without chrome-sandbox, and chrome-sandbox).
+name: openmhub
+version: ${VERSION}
+arch: ${ARCH}
+platform: linux
+maintainer: Brayan Spagnol <brayanspagnol@users.noreply.github.com>
+description: Unofficial configurator for MCHOSE mice and keyboards (battery, DPI, lighting, macros)
+homepage: https://github.com/brayanspagnol/OpenMHub
+license: MIT
+section: utils
+
+contents:
+  - src: ${ROOT}/app
+    dst: /usr/lib/mhub-linux/app
+  - src: ${STAGE}/electron
+    dst: /usr/lib/mhub-linux/electron
+  # Ubuntu 24.04+ blocks unprivileged user namespaces, so Electron needs its setuid sandbox helper.
+  - src: ${STAGE}/chrome-sandbox
+    dst: /usr/lib/mhub-linux/electron/chrome-sandbox
+    file_info:
+      mode: 04755
+      owner: root
+      group: root
+  - src: ${STAGE}/mhub-linux
+    dst: /usr/bin/mhub-linux
+    file_info:
+      mode: 0755
+  - src: /usr/bin/mhub-linux
+    dst: /usr/bin/openmhub
+    type: symlink
+  - src: ${ROOT}/packaging/mhub-linux.desktop
+    dst: /usr/share/applications/mhub-linux.desktop
+  - src: ${ROOT}/app/assets/icon-256.png
+    dst: /usr/share/icons/hicolor/256x256/apps/mhub-linux.png
+  - src: ${ROOT}/app/assets/icon-512.png
+    dst: /usr/share/icons/hicolor/512x512/apps/mhub-linux.png
+  - src: ${ROOT}/app/assets/icon.svg
+    dst: /usr/share/icons/hicolor/scalable/apps/mhub-linux.svg
+  - src: ${ROOT}/udev/70-mhub-linux.rules
+    dst: /usr/lib/udev/rules.d/70-mhub-linux.rules
+  - src: ${ROOT}/LICENSE
+    dst: /usr/share/licenses/openmhub/LICENSE
+
+scripts:
+  postinstall: ${ROOT}/packaging/linux-postinstall.sh
+
+overrides:
+  deb:
+    depends:
+      - libgtk-3-0t64 | libgtk-3-0
+      - libnss3
+      - libasound2t64 | libasound2
+      - libgbm1
+      - libnotify4
+  rpm:
+    # Library names instead of package names, so the same package installs on Fedora and openSUSE.
+    depends:
+      - libgtk-3.so.0()(64bit)
+      - libnss3.so()(64bit)
+      - libasound.so.2()(64bit)
+      - libgbm.so.1()(64bit)
