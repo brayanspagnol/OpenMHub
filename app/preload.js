@@ -10,8 +10,6 @@ contextBridge.exposeInMainWorld('mhub', {
   // Idioma escolhido na interface ('en' | 'pt-BR'): bandeja, notificações e avisos de Caps Lock seguem ele.
   setLang: (lang) => ipcRenderer.invoke('prefs:set', 'lang', lang).then(() => undefined),
   version: () => ipcRenderer.invoke('version'),
-  // { flatpak }: o que muda quando o app roda no Flatpak.
-  env: () => ipcRenderer.invoke('env'),
   // Notificação na área de trabalho. opts: { tag, silent, urgency }. Mesmo tag substitui a anterior;
   // tag 'dpi' é ignorada quando a preferência dpiNotify está desligada.
   notify: (title, body, opts) => ipcRenderer.send('notify', String(title ?? ''), String(body ?? ''),

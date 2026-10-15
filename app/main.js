@@ -7,10 +7,8 @@ const crypto = require('crypto');
 const { execFile } = require('child_process');
 
 // userData fixo em ~/.config/mhub-linux (definido antes do setName, que mudaria a pasta);
-// o nome "OpenMHub" aparece nas notificações. A classe da janela segue "mhub-linux" na instalação
-// nativa; no Flatpak é o id do app, para casar com o .desktop do pacote.
-const FLATPAK = process.env.FLATPAK_ID || '';
-const APP_CLASS = FLATPAK || 'mhub-linux';
+// o nome "OpenMHub" aparece nas notificações. A classe da janela é "mhub-linux", igual ao .desktop.
+const APP_CLASS = 'mhub-linux';
 const NAME = 'OpenMHub';
 app.setPath('userData', path.join(app.getPath('appData'), 'mhub-linux'));
 app.setName(NAME);
@@ -156,7 +154,6 @@ async function serveImage(req) {
 const autostartFile = () => path.join(app.getPath('home'), '.config', 'autostart', 'mhub-linux.desktop');
 
 function applyAutostart() {
-  if (FLATPAK) return; // no sandbox não dá para gravar em ~/.config/autostart nem no config do Hyprland
   const file = autostartFile();
   if (!prefs.autostart) {
     fs.rmSync(file, { force: true });
@@ -465,8 +462,6 @@ ipcMain.handle('prefs:set', (_e, key, value) => {
   if (key === 'lang') updateTray();
 });
 ipcMain.handle('version', () => app.getVersion());
-// Diferenças do Flatpak na interface: sem início automático e regra udev instalada à mão.
-ipcMain.handle('env', () => ({ flatpak: !!FLATPAK }));
 // Notificação vinda da interface (ex.: troca de DPI). tag 'dpi' respeita a preferência dpiNotify.
 ipcMain.on('notify', (_e, title, body, opts) => {
   const o = opts && typeof opts === 'object' ? opts : {};

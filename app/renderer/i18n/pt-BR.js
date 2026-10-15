@@ -9,7 +9,6 @@ export default {
   'settings': 'Configurações',
   'title.tagline': 'Não oficial · para aparelhos MCHOSE',
   'title.back': 'Voltar ao início',
-  'common.copy': 'Copiar',
   'common.cancel': 'Cancelar',
   'common.confirm': 'Confirmar',
   'common.restoreDefaults': 'Restaurar padrão',
@@ -25,8 +24,6 @@ export default {
   'common.saved': 'Salvo',
   'common.saveFailed': 'Não foi possível gravar: {err}',
   'common.prefFailed': 'Não foi possível salvar: {err}',
-  'common.copied': 'Comando copiado',
-  'common.copyFailed': 'Não foi possível copiar',
 
   // Conexão e estado
   'mode.wired': 'Com fio',
@@ -50,7 +47,6 @@ export default {
   'home.empty': 'Nenhum aparelho conectado ainda',
   'home.emptyBody': 'Ligue seu mouse ou teclado MCHOSE, pelo cabo ou pelo receptor sem fio. Ele aparece aqui sozinho, sem precisar reabrir o app.',
   'home.notShowing': 'Já está ligado e não aparece?',
-  'home.flatpakHelp': 'No Flatpak, o acesso aos aparelhos precisa de uma regra do udev, instalada uma vez só. Rode este comando num terminal (ele pede sua senha), depois tire e conecte de novo o receptor ou o cabo:',
   'home.nativeHelp': 'Tire o receptor ou o cabo e conecte de novo. Se continuar sem aparecer, rode o instalador do OpenMHub mais uma vez: ele libera o acesso do app aos aparelhos.',
   'home.sleeping': 'Aparelho em repouso. Mexa nele para acordar.',
   'home.tests': 'Testes',

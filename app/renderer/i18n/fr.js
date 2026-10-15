@@ -9,7 +9,6 @@ export default {
   'settings': 'Paramètres',
   'title.tagline': 'Non officiel · pour périphériques MCHOSE',
   'title.back': 'Retour à l’accueil',
-  'common.copy': 'Copier',
   'common.cancel': 'Annuler',
   'common.confirm': 'Confirmer',
   'common.restoreDefaults': 'Restaurer les valeurs par défaut',
@@ -25,8 +24,6 @@ export default {
   'common.saved': 'Enregistré',
   'common.saveFailed': 'Impossible d’enregistrer sur le périphérique : {err}',
   'common.prefFailed': 'Impossible d’enregistrer le paramètre : {err}',
-  'common.copied': 'Commande copiée',
-  'common.copyFailed': 'Impossible de copier',
 
   // Connexion et état
   'mode.wired': 'Filaire',
@@ -50,7 +47,6 @@ export default {
   'home.empty': 'Aucun périphérique connecté pour l’instant',
   'home.emptyBody': 'Branchez votre souris ou votre clavier MCHOSE avec le câble ou le récepteur sans fil. Il apparaîtra ici automatiquement, sans redémarrer l’application.',
   'home.notShowing': 'Connecté mais introuvable ?',
-  'home.flatpakHelp': 'Dans la version Flatpak, l’accès aux périphériques nécessite une règle udev à installer une seule fois. Exécutez cette commande dans un terminal (votre mot de passe vous sera demandé), puis débranchez et rebranchez le récepteur ou le câble :',
   'home.nativeHelp': 'Débranchez le récepteur ou le câble, puis rebranchez-le. S’il n’apparaît toujours pas, relancez l’installateur d’OpenMHub : il donne à l’application l’accès à vos périphériques.',
   'home.sleeping': 'Le périphérique est en veille. Bougez-le pour le réveiller.',
   'home.tests': 'Outil de test',

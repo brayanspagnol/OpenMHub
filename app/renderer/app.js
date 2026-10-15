@@ -31,7 +31,6 @@ const state = {
   homeView: store.get('homeView', 'grid'),
   ui: new Map(),         // id do aparelho -> estado da interface (aba de teclas, DPI em edição...)
   prefs: null,           // preferências do processo principal (bandeja, notificações, autostart)
-  flatpak: false,        // rodando no Flatpak: sem início automático, regra udev instalada à mão
 };
 
 /* ---------- Tema e barra de título ---------- */
@@ -225,11 +224,6 @@ function renderTitle() {
   }
 }
 
-// Mesma regra de udev/70-mhub-linux.rules, num comando só para colar no terminal (bash, zsh ou fish).
-const UDEV_CMD = `printf '%s\\n' ${['3837', '41e4'].map((v) => `'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="${v}", MODE="0660", TAG+="uaccess"'`).join(' ')}`
-  + ' | sudo tee /etc/udev/rules.d/70-mhub-linux.rules >/dev/null'
-  + ' && sudo udevadm control --reload && sudo udevadm trigger --subsystem-match=hidraw';
-
 function renderHome() {
   const devs = logicalDevices();
   let cards;
@@ -240,10 +234,7 @@ function renderHome() {
     cards = `<div class="empty"><div class="empty-ico">${icon('devices')}</div>
       <h3>${t('home.empty')}</h3>
       <p>${t('home.emptyBody')}</p>
-      <details ${state.flatpak ? 'open' : ''}><summary>${t('home.notShowing')}</summary>
-        ${state.flatpak ? `<p>${t('home.flatpakHelp')}</p>
-        <div class="cmd"><code id="udev-cmd">${esc(UDEV_CMD)}</code><button class="btn-white" id="copy-udev">${t('common.copy')}</button></div>`
-    : `<p>${t('home.nativeHelp')}</p>`}</details>
+      <details><summary>${t('home.notShowing')}</summary><p>${t('home.nativeHelp')}</p></details>
     </div>`;
   } else {
     cards = `<div class="cards ${state.homeView === 'list' ? 'list' : ''}">${devs.map(({ id, drv, st }) => `
@@ -356,7 +347,7 @@ function renderSettings() {
       ${card(t('set.poll'), t('set.pollDesc'),
         `<select class="sel" id="set-poll">${[1000, 3000, 5000, 10000].map((v) => `<option value="${v}" ${v === state.pollMs ? 'selected' : ''}>${v / 1000} s</option>`).join('')}</select>`)}
       ${p ? card(t('set.tray'), t('set.trayDesc'), prefSwitch('closeToTray'))
-        + (state.flatpak ? '' : card(t('set.autostart'), t('set.autostartDesc'), prefSwitch('autostart'))) : ''}`;
+        + card(t('set.autostart'), t('set.autostartDesc'), prefSwitch('autostart')) : ''}`;
   }
   return `<div class="settings-page">
     <nav class="set-nav">${SET_TABS.map(([id, ic, label]) => `<button class="${id === tab ? 'on' : ''}" data-set-tab="${id}">${icon(ic)}${label}</button>`).join('')}</nav>
@@ -532,8 +523,6 @@ function render(force = false) {
   const t = $('#seg-tester'); if (t) t.onclick = () => go('tester');
   for (const b of document.querySelectorAll('[data-home-view]')) b.onclick = () => { state.homeView = b.dataset.homeView; store.set('homeView', state.homeView); lastHtml = ''; render(true); };
   const ts = $('#set-tester'); if (ts) ts.onclick = () => go('tester');
-  const cu = $('#copy-udev');
-  if (cu) cu.onclick = () => navigator.clipboard.writeText(UDEV_CMD).then(() => toast(t('common.copied')), () => toast(t('common.copyFailed'), true));
   bindSettings();
   if (screenChanged) animateIn(view.firstElementChild, state.view === 'home' ? 'anim-home' : 'anim-page');
   lastViewKey = viewKey;
@@ -610,6 +599,5 @@ applyTheme();
 window.mhub?.setLang?.(lang)?.catch?.(() => {});
 render(true);
 window.mhub?.getPrefs?.().then((p) => { state.prefs = p; if (state.view === 'settings') render(true); }).catch(() => {});
-window.mhub?.env?.().then((e) => { state.flatpak = !!e?.flatpak; render(true); }).catch(() => {});
 rescan();
 schedule();

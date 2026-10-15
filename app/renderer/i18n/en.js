@@ -9,7 +9,6 @@ export default {
   'settings': 'Settings',
   'title.tagline': 'Unofficial · for MCHOSE devices',
   'title.back': 'Back to home',
-  'common.copy': 'Copy',
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
   'common.restoreDefaults': 'Restore defaults',
@@ -25,8 +24,6 @@ export default {
   'common.saved': 'Saved',
   'common.saveFailed': 'Couldn’t save to the device: {err}',
   'common.prefFailed': 'Couldn’t save the setting: {err}',
-  'common.copied': 'Command copied',
-  'common.copyFailed': 'Couldn’t copy',
 
   // Connection and status
   'mode.wired': 'Wired',
@@ -50,7 +47,6 @@ export default {
   'home.empty': 'No devices connected yet',
   'home.emptyBody': 'Connect your MCHOSE mouse or keyboard with the cable or the wireless receiver. It shows up here automatically, no need to restart the app.',
   'home.notShowing': 'Connected but not showing up?',
-  'home.flatpakHelp': 'In the Flatpak, device access needs a udev rule that you install once. Run this command in a terminal (it asks for your password), then unplug and reconnect the receiver or cable:',
   'home.nativeHelp': 'Unplug the receiver or cable and plug it back in. If it still doesn’t show up, run the OpenMHub installer again: it gives the app access to your devices.',
   'home.sleeping': 'Device is asleep. Move it to wake it up.',
   'home.tests': 'Test tool',
