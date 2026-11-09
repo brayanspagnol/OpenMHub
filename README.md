@@ -4,6 +4,8 @@
 ![Platform: Linux](https://img.shields.io/badge/platform-Linux-blue)
 ![Language: JavaScript](https://img.shields.io/badge/language-JavaScript-F7DF1E)
 
+[Leia em português](README.pt-BR.md)
+
 An unofficial, open-source Linux configurator for MCHOSE mice and keyboards, built to look and behave like MCHOSE's official M HUB app, which only runs on Windows. (Formerly "M HUB Linux".)
 
 See at a glance how much battery each device has, whether it is charging, and whether it is connected by cable or 2.4G receiver. For supported devices, change the settings stored on the device: buttons, DPI, polling rate, lighting, key remapping and macros.
