@@ -10,6 +10,6 @@ pkgbase = openmhub
 	provides = mhub-linux
 	conflicts = mhub-linux
 	source = openmhub-0.3.2.tar.gz::https://github.com/brayanspagnol/OpenMHub/archive/refs/tags/v0.3.2.tar.gz
-	sha256sums = eb7bd563e7772feaa76548116bfc11ffc40504da0e77141882665b8ef3ad78a0
+	sha256sums = f00c75da8cfa7a8a6c977daa94baeef30c3b6cbb6d72fbfc4df11565c591147c
 
 pkgname = openmhub
