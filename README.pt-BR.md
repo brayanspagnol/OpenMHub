@@ -1,18 +1,23 @@
-# OpenMHub
+<div align="center">
+  <img src="app/assets/icon.svg" width="96" alt="Logo do OpenMHub">
+  <h1>OpenMHub</h1>
+  <p><strong>Um configurador não oficial e de código aberto para mouses e teclados MCHOSE no Linux.</strong></p>
+  <p>
+    <a href="https://github.com/brayanspagnol/OpenMHub/releases/latest"><img alt="Versão mais recente" src="https://img.shields.io/github/v/release/brayanspagnol/OpenMHub"></a>
+    <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/github/license/brayanspagnol/OpenMHub"></a>
+    <img alt="Plataforma: Linux" src="https://img.shields.io/badge/platform-Linux-blue">
+    <img alt="Linguagem: JavaScript" src="https://img.shields.io/badge/language-JavaScript-F7DF1E">
+  </p>
+  <p><a href="README.md">Read in English</a></p>
+</div>
 
-[![Licença: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-![Plataforma: Linux](https://img.shields.io/badge/platform-Linux-blue)
-![Linguagem: JavaScript](https://img.shields.io/badge/language-JavaScript-F7DF1E)
+![Tela inicial do OpenMHub](docs/screenshots/home.png)
 
-[Read in English](README.md)
-
-Um configurador não oficial e de código aberto para mouses e teclados MCHOSE no Linux, feito para ter a aparência e o comportamento do M HUB, o app oficial da MCHOSE, que só roda no Windows. (Antes se chamava "M HUB Linux".)
+O OpenMHub foi feito para ter a aparência e o comportamento do M HUB, o app oficial da MCHOSE, que só roda no Windows. (Antes se chamava "M HUB Linux".)
 
 Veja de relance quanta bateria cada dispositivo tem, se está carregando e se está conectado por cabo ou pelo receptor 2.4G. Nos dispositivos compatíveis, altere as configurações salvas no próprio dispositivo: botões, DPI, polling rate, iluminação, remapeamento de teclas e macros.
 
 > **Não oficial: sem vínculo, patrocínio ou endosso da MCHOSE.** Este é um projeto da comunidade. MCHOSE e M HUB são marcas registradas de seu dono. O app fala com os dispositivos usando os mesmos comandos HID que o driver web oficial do M HUB envia. Atualização de firmware não é suportada de propósito; para isso, use o app oficial.
-
-![Tela inicial](docs/screenshots/home.png)
 
 | Botões do mouse | DPI do mouse |
 |---|---|
