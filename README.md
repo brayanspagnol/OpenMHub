@@ -1,18 +1,23 @@
-# OpenMHub
+<div align="center">
+  <img src="app/assets/icon.svg" width="96" alt="OpenMHub logo">
+  <h1>OpenMHub</h1>
+  <p><strong>An unofficial, open-source Linux configurator for MCHOSE mice and keyboards.</strong></p>
+  <p>
+    <a href="https://github.com/brayanspagnol/OpenMHub/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/brayanspagnol/OpenMHub"></a>
+    <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/github/license/brayanspagnol/OpenMHub"></a>
+    <img alt="Platform: Linux" src="https://img.shields.io/badge/platform-Linux-blue">
+    <img alt="Language: JavaScript" src="https://img.shields.io/badge/language-JavaScript-F7DF1E">
+  </p>
+  <p><a href="README.pt-BR.md">Leia em português</a></p>
+</div>
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-![Platform: Linux](https://img.shields.io/badge/platform-Linux-blue)
-![Language: JavaScript](https://img.shields.io/badge/language-JavaScript-F7DF1E)
+![OpenMHub home screen](docs/screenshots/home.png)
 
-[Leia em português](README.pt-BR.md)
-
-An unofficial, open-source Linux configurator for MCHOSE mice and keyboards, built to look and behave like MCHOSE's official M HUB app, which only runs on Windows. (Formerly "M HUB Linux".)
+OpenMHub is built to look and behave like MCHOSE's official M HUB app, which only runs on Windows. (Formerly "M HUB Linux".)
 
 See at a glance how much battery each device has, whether it is charging, and whether it is connected by cable or 2.4G receiver. For supported devices, change the settings stored on the device: buttons, DPI, polling rate, lighting, key remapping and macros.
 
 > **Unofficial — not affiliated with, sponsored or endorsed by MCHOSE.** This is a community project. MCHOSE and M HUB are trademarks of their owner. It talks to the devices with the same HID commands the official M HUB web driver sends; firmware updates are deliberately not supported, so use the official app for those.
-
-![Home screen](docs/screenshots/home.png)
 
 | Mouse buttons | Mouse DPI |
 |---|---|
